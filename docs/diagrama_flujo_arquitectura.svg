@@ -1,0 +1,89 @@
+<svg width="820" height="640" viewBox="0 0 820 640" xmlns="http://www.w3.org/2000/svg">
+<style>
+  .box { fill: #ffffff; stroke: #333333; stroke-width: 1.5; rx: 10; }
+  .box-accent { fill: #eef2ff; stroke: #4338ca; stroke-width: 1.5; rx: 10; }
+  .box-final { fill: #ecfdf5; stroke: #059669; stroke-width: 1.5; rx: 10; }
+  .title { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; fill: #111827; }
+  .subtitle { font-family: Arial, sans-serif; font-size: 11px; fill: #4b5563; }
+  .arrow { stroke: #6b7280; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+  .step-num { font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; fill: #ffffff; }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+    <path d="M0,0 L8,4 L0,8 Z" fill="#6b7280"/>
+  </marker>
+</defs>
+
+<text x="410" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#111827" text-anchor="middle">Flujo de Arquitectura — RLKA (Roof Leopard Knowledge Agent)</text>
+
+<!-- Step 1 -->
+<rect class="box" x="60" y="60" width="220" height="60"/>
+<circle cx="72" cy="72" r="12" fill="#4338ca"/><text x="72" y="76" class="step-num" text-anchor="middle">1</text>
+<text x="178" y="85" class="title" text-anchor="middle">Documentos fuente</text>
+<text x="178" y="102" class="subtitle" text-anchor="middle">3 PDFs (Warranty, Manual, RRHH)</text>
+
+<path class="arrow" d="M280,90 H340"/>
+
+<!-- Step 2 -->
+<rect class="box" x="340" y="60" width="220" height="60"/>
+<circle cx="352" cy="72" r="12" fill="#4338ca"/><text x="352" y="76" class="step-num" text-anchor="middle">2</text>
+<text x="458" y="85" class="title" text-anchor="middle">Ingesta y chunking</text>
+<text x="458" y="102" class="subtitle" text-anchor="middle">Extrae texto y divide en fragmentos</text>
+
+<path class="arrow" d="M560,90 H620 V150"/>
+
+<!-- Step 3 -->
+<rect class="box-accent" x="500" y="150" width="220" height="60"/>
+<circle cx="512" cy="162" r="12" fill="#4338ca"/><text x="512" y="166" class="step-num" text-anchor="middle">3</text>
+<text x="618" y="175" class="title" text-anchor="middle">Embeddings</text>
+<text x="618" y="192" class="subtitle" text-anchor="middle">Cada fragmento se convierte en vector</text>
+
+<path class="arrow" d="M500,180 H340"/>
+
+<!-- Step 4 -->
+<rect class="box-accent" x="120" y="150" width="220" height="60"/>
+<circle cx="132" cy="162" r="12" fill="#4338ca"/><text x="132" y="166" class="step-num" text-anchor="middle">4</text>
+<text x="238" y="175" class="title" text-anchor="middle">Vector store</text>
+<text x="238" y="192" class="subtitle" text-anchor="middle">FAISS/Chroma — búsqueda por similitud</text>
+
+<path class="arrow" d="M230,210 V260"/>
+
+<!-- Step 5 -->
+<rect class="box" x="120" y="260" width="220" height="60"/>
+<circle cx="132" cy="272" r="12" fill="#0891b2"/><text x="132" y="276" class="step-num" text-anchor="middle">5</text>
+<text x="238" y="285" class="title" text-anchor="middle">Pregunta del usuario</text>
+<text x="238" y="302" class="subtitle" text-anchor="middle">"¿Cuánto dura la garantía?"</text>
+
+<path class="arrow" d="M340,290 H620 V260"/>
+
+<!-- Step 6 -->
+<rect class="box" x="500" y="260" width="220" height="60"/>
+<circle cx="512" cy="272" r="12" fill="#0891b2"/><text x="512" y="276" class="step-num" text-anchor="middle">6</text>
+<text x="618" y="285" class="title" text-anchor="middle">Búsqueda de contexto</text>
+<text x="618" y="302" class="subtitle" text-anchor="middle">Recupera 3-4 fragmentos relevantes</text>
+
+<path class="arrow" d="M610,320 V370"/>
+
+<!-- Step 7 -->
+<rect class="box-accent" x="500" y="370" width="220" height="60"/>
+<circle cx="512" cy="382" r="12" fill="#4338ca"/><text x="512" y="386" class="step-num" text-anchor="middle">7</text>
+<text x="618" y="395" class="title" text-anchor="middle">Agente RAG + LLM</text>
+<text x="618" y="412" class="subtitle" text-anchor="middle">Genera respuesta con ese contexto</text>
+
+<path class="arrow" d="M500,400 H340 V430"/>
+
+<!-- Step 8 -->
+<rect class="box" x="120" y="430" width="220" height="60"/>
+<circle cx="132" cy="442" r="12" fill="#0891b2"/><text x="132" y="446" class="step-num" text-anchor="middle">8</text>
+<text x="238" y="455" class="title" text-anchor="middle">Interfaz Streamlit</text>
+<text x="238" y="472" class="subtitle" text-anchor="middle">Muestra la respuesta al usuario</text>
+
+<path class="arrow" d="M230,490 V540"/>
+
+<!-- Step 9 -->
+<rect class="box-final" x="60" y="540" width="700" height="60"/>
+<circle cx="72" cy="552" r="12" fill="#059669"/><text x="72" y="556" class="step-num" text-anchor="middle">9</text>
+<text x="420" y="562" class="title" text-anchor="middle">GitHub (commits incrementales) + Deploy en OCI</text>
+<text x="420" y="580" class="subtitle" text-anchor="middle">Repositorio versionado y aplicación accesible vía link o captura</text>
+
+</svg>

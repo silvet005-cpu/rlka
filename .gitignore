@@ -1,0 +1,13 @@
+# Entorno
+.env
+venv/
+__pycache__/
+*.pyc
+
+# Índices de vector store generados
+*.faiss
+*.index
+chroma_db/
+
+# Sistema
+.DS_Store
