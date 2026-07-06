@@ -9,26 +9,35 @@ tarjeta de Trello "2 - Proceso y extraccion de contenido"):
 2. Limpieza: normaliza espacios y saltos de linea sobrantes que deja
    la extraccion de PDF.
 3. Chunking por tamano fijo (500-1000 caracteres) con solapamiento,
-   respetando el limite de cada pagina — esta es la estrategia mas
-   confiable dada la calidad real de extraccion de estos PDFs (se
-   evaluo tambien chunking por seccion logica, pero los encabezados
-   numerados a veces quedan pegados al texto siguiente al extraerse
-   del PDF, y los pasos numerados de los flujos operativos se
-   confundian con encabezados — ver nota en el commit).
+   respetando el limite de cada pagina.
 4. Metadata por chunk: documento de origen, categoria, y numero de
    pagina — necesario para que el agente cite la fuente exacta
    (ver seccion 11 de Documentacion_Tecnica, dialogos de RoofKA).
+
+NOTA IMPORTANTE sobre la herramienta de extraccion (hallazgo de
+validacion, riesgo R-02 del Diagnostico_ASIS_TOBE_RLKA):
+Se probaron 3 herramientas de extraccion (pdfplumber, PyMuPDF, y
+pdftotext de poppler-utils). Tanto pdfplumber como PyMuPDF descartan
+por completo la tabla de la Seccion 6 (Duracion de garantia por tipo
+de trabajo) del documento de Warranty — es una limitacion real de
+como esas librerias interpretan el layout de esa tabla especifica en
+el PDF. Unicamente "pdftotext -layout" (herramienta de linea de
+comandos, parte de poppler-utils) extrae la tabla correctamente. Por
+eso este modulo usa pdftotext en vez de una libreria de Python pura.
+
+Requisito de sistema: poppler-utils debe estar instalado en el
+entorno donde corra este script.
+- Google Colab: !apt-get install -y poppler-utils
+- Servidor OCI (Ubuntu/Debian): sudo apt-get install -y poppler-utils
 """
 
 import os
 import re
-import pdfplumber
+import subprocess
 
-# Tamano de chunk recomendado por la tarjeta del challenge: 500-1000 caracteres.
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 150
 
-# Categoria de cada documento, segun su nombre de archivo.
 CATEGORY_BY_FILENAME = {
     "politica_warranty_dummy.pdf": "Garantía",
     "manual_procedimientos_operativos_dummy.pdf": "Procedimientos Operativos",
@@ -38,36 +47,46 @@ CATEGORY_BY_FILENAME = {
 
 def extract_pages_from_pdf(pdf_path: str) -> list[tuple[int, str]]:
     """
-    Extrae el texto de un PDF, conservando el numero de pagina de cada
-    fragmento (necesario para la metadata de trazabilidad).
+    Extrae el texto de un PDF usando pdftotext (poppler-utils) en modo
+    -layout, que preserva correctamente el contenido de tablas que
+    otras librerias de Python (pdfplumber, PyMuPDF) descartan.
 
     Returns:
         Lista de tuplas (numero_de_pagina, texto_de_la_pagina).
     """
+    try:
+        result = subprocess.run(
+            ["pdftotext", "-layout", pdf_path, "-"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except FileNotFoundError:
+        raise RuntimeError(
+            "No se encontro 'pdftotext'. Instala poppler-utils:\n"
+            "  Colab: !apt-get install -y poppler-utils\n"
+            "  Ubuntu/Debian: sudo apt-get install -y poppler-utils"
+        )
+
+    # pdftotext separa cada pagina con un caracter de salto de pagina (\f).
+    raw_pages = result.stdout.split("\f")
+
     pages = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for i, page in enumerate(pdf.pages, start=1):
-            text = page.extract_text()
-            if text:
-                pages.append((i, text))
+    for i, page_text in enumerate(raw_pages, start=1):
+        if page_text.strip():
+            pages.append((i, page_text))
     return pages
 
 
 def clean_text(text: str) -> str:
-    """
-    Limpieza basica del texto extraido: colapsa espacios y saltos de
-    linea repetidos que suelen aparecer al extraer texto de PDF.
-    """
-    text = re.sub(r"[ \t]+", " ", text)          # espacios repetidos
-    text = re.sub(r"\n{3,}", "\n\n", text)        # mas de 2 saltos de linea seguidos
+    """Colapsa espacios y saltos de linea repetidos."""
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
 
 
 def chunk_page_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
-    """
-    Divide el texto de una pagina en fragmentos de tamano fijo, con
-    solapamiento entre ellos para no cortar una idea a la mitad.
-    """
+    """Divide el texto de una pagina en fragmentos de tamano fijo con solapamiento."""
     if len(text) <= chunk_size:
         return [text]
 
@@ -82,9 +101,8 @@ def chunk_page_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUN
 
 def load_and_chunk_documents(data_dir: str = "data/") -> list[dict]:
     """
-    Procesa todos los PDFs de la carpeta data/: extrae, limpia, y
-    divide en chunks de tamano fijo, devolviendo una sola lista con
-    los chunks de los 3 documentos fuente. Cada chunk conserva
+    Procesa todos los PDFs de la carpeta data/: extrae (con pdftotext),
+    limpia, y divide en chunks de tamano fijo. Cada chunk conserva
     metadata de trazabilidad (fuente, categoria, pagina).
     """
     all_chunks = []
@@ -102,8 +120,7 @@ def load_and_chunk_documents(data_dir: str = "data/") -> list[dict]:
         pages = extract_pages_from_pdf(pdf_path)
 
         if not pages:
-            print(f"Advertencia: no se pudo extraer texto de '{filename}'. "
-                  f"Revisar si el PDF tiene texto seleccionable (no escaneado).")
+            print(f"Advertencia: no se pudo extraer texto de '{filename}'.")
             continue
 
         category = CATEGORY_BY_FILENAME.get(filename.lower(), "General")
