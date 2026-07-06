@@ -98,7 +98,7 @@ def load_vectorstore(index_path: str = INDEX_PATH, metadata_path: str = METADATA
     return index, metadata
 
 
-def search(query: str, index: faiss.Index, metadata: list[dict], top_k: int = 4) -> list[dict]:
+def search(query: str, index: faiss.Index, metadata: list[dict], top_k: int = 4, category: str | None = None) -> list[dict]:
     """
     Busca los chunks mas relevantes para una pregunta, usando el MISMO
     modelo de embeddings con el que se indexaron los documentos.
@@ -108,6 +108,10 @@ def search(query: str, index: faiss.Index, metadata: list[dict], top_k: int = 4)
         index: el indice FAISS ya construido.
         metadata: la lista de metadata correspondiente al indice.
         top_k: cuantos chunks relevantes devolver.
+        category: si se especifica (ej. "Garantía", "Recursos Humanos"),
+            restringe la busqueda solo a chunks de esa categoria antes
+            de calcular similitud semantica (filtrado por metadatos,
+            tarjeta "4 - Camada de recuperacion").
 
     Returns:
         Lista de chunks (con su metadata) ordenados de mas a menos
@@ -118,17 +122,58 @@ def search(query: str, index: faiss.Index, metadata: list[dict], top_k: int = 4)
     query_embedding = model.encode([query], convert_to_numpy=True)
     faiss.normalize_L2(query_embedding)
 
-    scores, indices = index.search(query_embedding, top_k)
+    # Si se pide filtrar por categoria, buscamos entre mas candidatos
+    # de los necesarios (top_k * 5) para no quedarnos sin resultados
+    # despues de descartar los que no son de esa categoria.
+    search_k = top_k * 5 if category else top_k
+    search_k = min(search_k, index.ntotal)
+
+    scores, indices = index.search(query_embedding, search_k)
 
     results = []
     for score, idx in zip(scores[0], indices[0]):
         if idx == -1:
             continue
         chunk = metadata[idx].copy()
+
+        if category and chunk.get("category") != category:
+            continue
+
         chunk["similarity_score"] = float(score)
         results.append(chunk)
 
+        if len(results) >= top_k:
+            break
+
     return results
+
+
+def assemble_context(results: list[dict]) -> str:
+    """
+    Convierte los chunks recuperados en un bloque de texto formateado,
+    listo para insertarse en el prompt del LLM. Cada fragmento incluye
+    su fuente y pagina, para que el modelo pueda citarlas en la
+    respuesta (ver seccion 11 de Documentacion_Tecnica, dialogos de
+    RoofKA).
+
+    Args:
+        results: lista de chunks devueltos por search().
+
+    Returns:
+        Texto formateado con todos los fragmentos, listo para el prompt.
+        Si no hay resultados, devuelve una cadena vacia (senal para que
+        agent.py active el fallback de "no tengo esa informacion").
+    """
+    if not results:
+        return ""
+
+    bloques = []
+    for r in results:
+        bloques.append(
+            f"[Fuente: {r['source']}, página {r['page']}]\n{r['content']}"
+        )
+
+    return "\n\n---\n\n".join(bloques)
 
 
 if __name__ == "__main__":
