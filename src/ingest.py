@@ -8,8 +8,8 @@ tarjeta de Trello "2 - Proceso y extraccion de contenido"):
    no escaneado — no requiere OCR).
 2. Limpieza: normaliza espacios y saltos de linea sobrantes que deja
    la extraccion de PDF.
-3. Chunking por tamano fijo (500-1000 caracteres) con solapamiento,
-   respetando el limite de cada pagina.
+3. Chunking respetando parrafos/secciones (no corte ciego por tamano),
+   con fallback a tamano fijo solo si un parrafo individual es muy largo.
 4. Metadata por chunk: documento de origen, categoria, y numero de
    pagina — necesario para que el agente cite la fuente exacta
    (ver seccion 11 de Documentacion_Tecnica, dialogos de RoofKA).
@@ -19,11 +19,16 @@ validacion, riesgo R-02 del Diagnostico_ASIS_TOBE_RLKA):
 Se probaron 3 herramientas de extraccion (pdfplumber, PyMuPDF, y
 pdftotext de poppler-utils). Tanto pdfplumber como PyMuPDF descartan
 por completo la tabla de la Seccion 6 (Duracion de garantia por tipo
-de trabajo) del documento de Warranty — es una limitacion real de
-como esas librerias interpretan el layout de esa tabla especifica en
-el PDF. Unicamente "pdftotext -layout" (herramienta de linea de
-comandos, parte de poppler-utils) extrae la tabla correctamente. Por
-eso este modulo usa pdftotext en vez de una libreria de Python pura.
+de trabajo) del documento de Warranty. Unicamente "pdftotext -layout"
+extrae la tabla correctamente. Por eso este modulo usa pdftotext en
+vez de una libreria de Python pura.
+
+NOTA sobre el chunking (segundo hallazgo de validacion): el corte a
+tamano fijo ciego mezclaba/cortaba secciones completas (detectado en
+RRHH: la seccion 13 quedaba mezclada con el final de la seccion 12,
+bajando la similitud semantica por debajo del umbral de confianza).
+La correccion respeta los limites de parrafo (separados por linea en
+blanco), empaquetando parrafos completos hasta el limite de tamano.
 
 Requisito de sistema: poppler-utils debe estar instalado en el
 entorno donde corra este script.
@@ -68,7 +73,6 @@ def extract_pages_from_pdf(pdf_path: str) -> list[tuple[int, str]]:
             "  Ubuntu/Debian: sudo apt-get install -y poppler-utils"
         )
 
-    # pdftotext separa cada pagina con un caracter de salto de pagina (\f).
     raw_pages = result.stdout.split("\f")
 
     pages = []
@@ -86,24 +90,50 @@ def clean_text(text: str) -> str:
 
 
 def chunk_page_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
-    """Divide el texto de una pagina en fragmentos de tamano fijo con solapamiento."""
-    if len(text) <= chunk_size:
-        return [text]
+    """
+    Divide el texto de una pagina en fragmentos, respetando los
+    limites de parrafo/seccion (separados por linea en blanco) en vez
+    de cortar a tamano fijo ciego. Esto evita mezclar el final de una
+    seccion con el inicio de la siguiente en un mismo chunk.
+
+    Si un parrafo individual es mas largo que chunk_size, se sub-divide
+    ese parrafo especifico a tamano fijo con solapamiento (fallback).
+    """
+    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
 
     chunks = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunks.append(text[start:end].strip())
-        start = end - overlap
+    current_chunk = ""
+
+    for paragraph in paragraphs:
+        if len(paragraph) > chunk_size:
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+                current_chunk = ""
+            start = 0
+            while start < len(paragraph):
+                end = start + chunk_size
+                chunks.append(paragraph[start:end].strip())
+                start = end - overlap
+            continue
+
+        candidate = f"{current_chunk}\n\n{paragraph}" if current_chunk else paragraph
+        if len(candidate) <= chunk_size:
+            current_chunk = candidate
+        else:
+            chunks.append(current_chunk.strip())
+            current_chunk = paragraph
+
+    if current_chunk:
+        chunks.append(current_chunk.strip())
+
     return chunks
 
 
 def load_and_chunk_documents(data_dir: str = "data/") -> list[dict]:
     """
     Procesa todos los PDFs de la carpeta data/: extrae (con pdftotext),
-    limpia, y divide en chunks de tamano fijo. Cada chunk conserva
-    metadata de trazabilidad (fuente, categoria, pagina).
+    limpia, y divide en chunks. Cada chunk conserva metadata de
+    trazabilidad (fuente, categoria, pagina).
     """
     all_chunks = []
 
