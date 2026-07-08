@@ -15,11 +15,21 @@ simple.
 """
 
 import json
+import os
 from datetime import datetime, timezone
 
 import streamlit as st
 
-from vectorstore import load_vectorstore
+# Puente de compatibilidad: en Streamlit Community Cloud, las API keys
+# se configuran en "Secrets" (st.secrets), no en un archivo .env local.
+# Si la key no esta ya en las variables de entorno, la tomamos de
+# st.secrets y la exponemos como variable de entorno, para que
+# agent.py (que usa os.getenv) funcione igual en ambos entornos.
+if "COHERE_API_KEY" not in os.environ and "COHERE_API_KEY" in st.secrets:
+    os.environ["COHERE_API_KEY"] = st.secrets["COHERE_API_KEY"]
+
+from ingest import load_and_chunk_documents
+from vectorstore import build_vectorstore
 from agent import answer_question, SALUDO_INICIAL
 
 FEEDBACK_LOG_PATH = "feedback.jsonl"
@@ -29,8 +39,15 @@ st.set_page_config(page_title="RoofKA — RLKA", page_icon="🏠")
 
 @st.cache_resource
 def get_vectorstore():
-    """Carga el indice FAISS y la metadata una sola vez por sesion del servidor."""
-    return load_vectorstore()
+    """
+    Construye el indice FAISS a partir de los PDFs en data/ al iniciar
+    la app. Se reconstruye desde los documentos fuente en vez de cargar
+    un archivo .faiss pre-generado, ya que ese archivo binario no se
+    versiona en el repositorio (ver .gitignore). Esto tambien garantiza
+    que la app siempre refleje el contenido actual de data/.
+    """
+    chunks = load_and_chunk_documents()
+    return build_vectorstore(chunks)
 
 
 def log_feedback(question: str, answer: str, feedback: str) -> None:
