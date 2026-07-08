@@ -77,7 +77,7 @@ st.markdown(
     "<h1 style='color:#EEAB59; margin-bottom:0;'>RoofKA</h1>",
     unsafe_allow_html=True,
 )
-st.caption("⚠️ Estás conversando con un agente de inteligencia artificial, no con una persona.")
+st.caption("Soy un agente de inteligencia artificial, no una persona — aquí para ayudarte con tus consultas.")
 
 with st.sidebar:
     st.image("docs/leopard_strip_banner.png", use_container_width=True)
@@ -104,6 +104,9 @@ for i, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg["role"], avatar=avatar):
         st.write(msg["content"])
 
+if len(st.session_state.messages) == 1:
+    st.caption("👇 Prueba con una de las preguntas de ejemplo en el panel izquierdo, o escribe la tuya abajo.")
+
 pregunta = st.chat_input("Escribe tu pregunta sobre garantías, procedimientos o RRHH...") or pregunta_ejemplo
 
 if pregunta:
@@ -115,6 +118,7 @@ if pregunta:
         with st.spinner("RoofKA está consultando los documentos..."):
             respuesta = answer_question(pregunta, index, metadata)
         st.write(respuesta)
+        st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
 
         col1, col2, _ = st.columns([0.1, 0.1, 0.8])
         with col1:
