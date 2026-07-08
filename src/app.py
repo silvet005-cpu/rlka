@@ -34,7 +34,7 @@ from agent import answer_question, SALUDO_INICIAL
 
 FEEDBACK_LOG_PATH = "feedback.jsonl"
 
-st.set_page_config(page_title="RoofKA — RLKA", page_icon="🏠")
+st.set_page_config(page_title="RoofKA — RLKA", page_icon="docs/roofka_avatar.png")
 
 
 @st.cache_resource
@@ -64,7 +64,7 @@ def log_feedback(question: str, answer: str, feedback: str) -> None:
 
 index, metadata = get_vectorstore()
 
-AVATAR_ROOFKA = "🏠"
+AVATAR_ROOFKA = "docs/roofka_avatar.png"
 AVATAR_USUARIO = "🙋"
 
 EJEMPLOS_PREGUNTAS = [
@@ -73,10 +73,14 @@ EJEMPLOS_PREGUNTAS = [
     "¿Cómo se clasifica un contratista independiente?",
 ]
 
-st.title("RoofKA")
-st.caption("⚠️ Estás conversando con un agente de inteligencia artificial, no con una persona.")
+st.markdown(
+    "<h1 style='color:#EEAB59; margin-bottom:0;'>RoofKA</h1>",
+    unsafe_allow_html=True,
+)
+st.caption("Soy un agente de inteligencia artificial, no una persona — aquí para ayudarte con tus consultas.")
 
 with st.sidebar:
+    st.image("docs/leopard_strip_banner.png", use_container_width=True)
     st.subheader("Documentos disponibles")
     st.markdown(
         "- Política de Garantía (Warranty)\n"
@@ -89,7 +93,7 @@ with st.sidebar:
     st.subheader("Preguntas de ejemplo")
     pregunta_ejemplo = None
     for ejemplo in EJEMPLOS_PREGUNTAS:
-        if st.button(ejemplo, use_container_width=True):
+        if st.button(ejemplo, use_container_width=True, type="primary"):
             pregunta_ejemplo = ejemplo
 
 if "messages" not in st.session_state:
@@ -99,6 +103,9 @@ for i, msg in enumerate(st.session_state.messages):
     avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
     with st.chat_message(msg["role"], avatar=avatar):
         st.write(msg["content"])
+
+if len(st.session_state.messages) == 1:
+    st.caption("👇 Prueba con una de las preguntas de ejemplo en el panel izquierdo, o escribe la tuya abajo.")
 
 pregunta = st.chat_input("Escribe tu pregunta sobre garantías, procedimientos o RRHH...") or pregunta_ejemplo
 
@@ -111,10 +118,11 @@ if pregunta:
         with st.spinner("RoofKA está consultando los documentos..."):
             respuesta = answer_question(pregunta, index, metadata)
         st.write(respuesta)
+        st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
 
         col1, col2, _ = st.columns([0.1, 0.1, 0.8])
         with col1:
-            if st.button("👍", key=f"like_{len(st.session_state.messages)}"):
+            if st.button("👍", key=f"like_{len(st.session_state.messages)}", type="primary"):
                 log_feedback(pregunta, respuesta, "positivo")
                 st.toast("¡Gracias por tu retroalimentación!")
         with col2:
