@@ -86,7 +86,23 @@ EJEMPLOS_PREGUNTAS = [
 ]
 
 st.markdown(
-    "<h1 style='color:#EEAB59; margin-bottom:0;'>RoofKA</h1>",
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    h1, h2, h3 {
+        font-family: 'Baloo 2', sans-serif !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    "<h1 style='color:#EEAB59; font-size:44px; margin-bottom:0;'>RoofKA</h1>",
     unsafe_allow_html=True,
 )
 
@@ -126,12 +142,12 @@ if "messages" not in st.session_state:
 
 for i, msg in enumerate(st.session_state.messages):
     avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
-    bg_color = "#FDF5E8" if msg["role"] == "assistant" else "#3D362A"
+    bg_color = "#FDF5E8" if msg["role"] == "assistant" else "#232628"
     text_color = "#232628" if msg["role"] == "assistant" else "#FDF5E8"
     with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(
             f"<div style='background:{bg_color}; color:{text_color}; "
-            f"border-radius:10px; padding:10px 14px;'>{_markdown_bold_to_html(msg['content'])}</div>",
+            f"border-radius:10px; padding:12px 16px; font-size:15.5px; line-height:1.5;'>{_markdown_bold_to_html(msg['content'])}</div>",
             unsafe_allow_html=True,
         )
 
@@ -144,8 +160,8 @@ if pregunta:
     st.session_state.messages.append({"role": "user", "content": pregunta})
     with st.chat_message("user", avatar=AVATAR_USUARIO):
         st.markdown(
-            f"<div style='background:#3D362A; color:#FDF5E8; "
-            f"border-radius:10px; padding:10px 14px;'>{pregunta}</div>",
+            f"<div style='background:#232628; color:#FDF5E8; "
+            f"border-radius:10px; padding:12px 16px; font-size:15.5px; line-height:1.5;'>{pregunta}</div>",
             unsafe_allow_html=True,
         )
 
@@ -155,7 +171,7 @@ if pregunta:
             status.update(label="Listo", state="complete", expanded=False)
         st.markdown(
             f"<div style='background:#FDF5E8; color:#232628; "
-            f"border-radius:10px; padding:10px 14px;'>{_markdown_bold_to_html(respuesta)}</div>",
+            f"border-radius:10px; padding:12px 16px; font-size:15.5px; line-height:1.5;'>{_markdown_bold_to_html(respuesta)}</div>",
             unsafe_allow_html=True,
         )
         st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
