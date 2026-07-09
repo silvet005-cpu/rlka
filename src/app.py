@@ -128,7 +128,7 @@ st.markdown(
     "RoofK<span class='roof-a'>A</span></h1>",
     unsafe_allow_html=True,
 )
-st.caption("Estás conversando con un agente de inteligencia artificial, no con una persona.")
+st.caption("Agente de inteligencia artificial para consultas sobre garantías, procedimientos operativos y RRHH.")
 
 with open("docs/leopard_bg_tile.png", "rb") as f:
     _leopard_bg_b64 = base64.b64encode(f.read()).decode()
