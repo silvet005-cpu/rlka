@@ -14,6 +14,7 @@ Nota oficial del programa: la prioridad es funcionalidad, no diseno
 simple.
 """
 
+import base64
 import json
 import os
 from datetime import datetime, timezone
@@ -65,7 +66,7 @@ def log_feedback(question: str, answer: str, feedback: str) -> None:
 index, metadata = get_vectorstore()
 
 AVATAR_ROOFKA = "docs/roofka_avatar.png"
-AVATAR_USUARIO = "🙋"
+AVATAR_USUARIO = "docs/user_avatar.png"
 
 EJEMPLOS_PREGUNTAS = [
     "¿Cuánto dura la garantía de un techo completo?",
@@ -77,10 +78,23 @@ st.markdown(
     "<h1 style='color:#EEAB59; margin-bottom:0;'>RoofKA</h1>",
     unsafe_allow_html=True,
 )
-st.caption("Soy un agente de inteligencia artificial, no una persona — aquí para ayudarte con tus consultas.")
+
+with open("docs/leopard_bg_tile.png", "rb") as f:
+    _leopard_bg_b64 = base64.b64encode(f.read()).decode()
+
+st.markdown(
+    f"""
+    <style>
+    [data-testid="stSidebarContent"] {{
+        background-image: url("data:image/png;base64,{_leopard_bg_b64}");
+        background-repeat: repeat;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 with st.sidebar:
-    st.image("docs/leopard_strip_banner.png", use_container_width=True)
     st.subheader("Documentos disponibles")
     st.markdown(
         "- Política de Garantía (Warranty)\n"
@@ -101,8 +115,14 @@ if "messages" not in st.session_state:
 
 for i, msg in enumerate(st.session_state.messages):
     avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
+    bg_color = "#FDF5E8" if msg["role"] == "assistant" else "#232628"
+    text_color = "#232628" if msg["role"] == "assistant" else "#FFFFFF"
     with st.chat_message(msg["role"], avatar=avatar):
-        st.write(msg["content"])
+        st.markdown(
+            f"<div style='background:{bg_color}; color:{text_color}; "
+            f"border-radius:10px; padding:10px 14px;'>{msg['content']}</div>",
+            unsafe_allow_html=True,
+        )
 
 if len(st.session_state.messages) == 1:
     st.caption("👇 Prueba con una de las preguntas de ejemplo en el panel izquierdo, o escribe la tuya abajo.")
@@ -112,12 +132,21 @@ pregunta = st.chat_input("Escribe tu pregunta sobre garantías, procedimientos o
 if pregunta:
     st.session_state.messages.append({"role": "user", "content": pregunta})
     with st.chat_message("user", avatar=AVATAR_USUARIO):
-        st.write(pregunta)
+        st.markdown(
+            f"<div style='background:#232628; color:#FFFFFF; "
+            f"border-radius:10px; padding:10px 14px;'>{pregunta}</div>",
+            unsafe_allow_html=True,
+        )
 
     with st.chat_message("assistant", avatar=AVATAR_ROOFKA):
-        with st.spinner("RoofKA está consultando los documentos..."):
+        with st.status("🔎 Buscando en los documentos disponibles...", expanded=False) as status:
             respuesta = answer_question(pregunta, index, metadata)
-        st.write(respuesta)
+            status.update(label="Listo", state="complete", expanded=False)
+        st.markdown(
+            f"<div style='background:#FDF5E8; color:#232628; "
+            f"border-radius:10px; padding:10px 14px;'>{respuesta}</div>",
+            unsafe_allow_html=True,
+        )
         st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
 
         col1, col2, _ = st.columns([0.1, 0.1, 0.8])
