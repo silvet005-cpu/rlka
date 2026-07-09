@@ -161,6 +161,21 @@ with st.sidebar:
         if st.button(pregunta_faq, use_container_width=True, type="primary"):
             pregunta_frecuente = pregunta_faq
 
+    # Descarga del log de ejecucion (tarjeta 8 - registrar ejecucion).
+    # Necesario porque el filesystem de Streamlit Community Cloud es
+    # efimero: feedback.jsonl se pierde en cada redeploy, asi que hay
+    # que poder bajarlo como evidencia antes de que eso pase.
+    if os.path.exists(FEEDBACK_LOG_PATH):
+        st.divider()
+        with open(FEEDBACK_LOG_PATH, "rb") as f:
+            st.download_button(
+                "⬇️ Descargar feedback.jsonl",
+                data=f,
+                file_name="feedback.jsonl",
+                mime="application/jsonl",
+                use_container_width=True,
+            )
+
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": SALUDO_INICIAL}]
 
