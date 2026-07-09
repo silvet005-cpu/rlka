@@ -17,9 +17,20 @@ simple.
 import base64
 import json
 import os
+import re
 from datetime import datetime, timezone
 
 import streamlit as st
+
+
+def _markdown_bold_to_html(text: str) -> str:
+    """
+    Convierte **negrita** de markdown a <strong> HTML. Necesario porque
+    el texto se inserta dentro de un div con unsafe_allow_html=True, y
+    el markdown simple (**texto**) generado por Cohere no se procesa
+    automaticamente ahi dentro (aparecia literal con asteriscos).
+    """
+    return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
 
 # Puente de compatibilidad: en Streamlit Community Cloud, las API keys
 # se configuran en "Secrets" (st.secrets), no en un archivo .env local.
@@ -97,9 +108,9 @@ st.markdown(
 with st.sidebar:
     st.subheader("Documentos disponibles")
     st.markdown(
-        "- Política de Garantía (Warranty)\n"
-        "- Manual de Procedimientos Operativos\n"
-        "- Política de Recursos Humanos y Compensación"
+        "- Política de Garantía (Warranty) — *v1.1, jul 2026*\n"
+        "- Manual de Procedimientos Operativos — *v1.1, jul 2026*\n"
+        "- Política de Recursos Humanos y Compensación — *v1.0, jul 2026*"
     )
     st.caption("RoofKA solo responde con base en estos 3 documentos, citando la fuente exacta.")
 
@@ -115,12 +126,12 @@ if "messages" not in st.session_state:
 
 for i, msg in enumerate(st.session_state.messages):
     avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
-    bg_color = "#FDF5E8" if msg["role"] == "assistant" else "#232628"
-    text_color = "#232628" if msg["role"] == "assistant" else "#FFFFFF"
+    bg_color = "#FDF5E8" if msg["role"] == "assistant" else "#3D362A"
+    text_color = "#232628" if msg["role"] == "assistant" else "#FDF5E8"
     with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(
             f"<div style='background:{bg_color}; color:{text_color}; "
-            f"border-radius:10px; padding:10px 14px;'>{msg['content']}</div>",
+            f"border-radius:10px; padding:10px 14px;'>{_markdown_bold_to_html(msg['content'])}</div>",
             unsafe_allow_html=True,
         )
 
@@ -133,7 +144,7 @@ if pregunta:
     st.session_state.messages.append({"role": "user", "content": pregunta})
     with st.chat_message("user", avatar=AVATAR_USUARIO):
         st.markdown(
-            f"<div style='background:#232628; color:#FFFFFF; "
+            f"<div style='background:#3D362A; color:#FDF5E8; "
             f"border-radius:10px; padding:10px 14px;'>{pregunta}</div>",
             unsafe_allow_html=True,
         )
@@ -144,7 +155,7 @@ if pregunta:
             status.update(label="Listo", state="complete", expanded=False)
         st.markdown(
             f"<div style='background:#FDF5E8; color:#232628; "
-            f"border-radius:10px; padding:10px 14px;'>{respuesta}</div>",
+            f"border-radius:10px; padding:10px 14px;'>{_markdown_bold_to_html(respuesta)}</div>",
             unsafe_allow_html=True,
         )
         st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
