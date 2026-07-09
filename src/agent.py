@@ -58,8 +58,7 @@ SIMILARITY_THRESHOLD = 0.45
 LOG_PATH = "logs_ejecucion.jsonl"
 
 SALUDO_INICIAL = (
-    "¡Hola! Soy RoofKA IA, tu agente de consulta interna. "
-    "¿En qué puedo ayudarte hoy?"
+    "¡Hola! ¿En qué puedo ayudarte hoy?"
 )
 
 FUERA_DE_ALCANCE = (
