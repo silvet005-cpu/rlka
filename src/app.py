@@ -79,7 +79,7 @@ index, metadata = get_vectorstore()
 AVATAR_ROOFKA = "docs/roofka_avatar.png"
 AVATAR_USUARIO = "docs/user_avatar.png"
 
-EJEMPLOS_PREGUNTAS = [
+PREGUNTAS_FRECUENTES = [
     "¿Cuánto dura la garantía de un techo completo?",
     "¿Qué incluye el checklist de cierre de instalación?",
     "¿Cómo se clasifica un contratista independiente?",
@@ -96,6 +96,12 @@ st.markdown(
     h1, h2, h3 {
         font-family: 'Baloo 2', sans-serif !important;
     }
+    .block-container {
+        padding-top: 1.5rem !important;
+    }
+    [data-testid="stChatMessage"] {
+        margin-bottom: -0.6rem;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -105,6 +111,7 @@ st.markdown(
     "<h1 style='color:#EEAB59; font-size:44px; margin-bottom:0;'>RoofKA</h1>",
     unsafe_allow_html=True,
 )
+st.caption("Estás conversando con un agente de inteligencia artificial, no con una persona.")
 
 with open("docs/leopard_bg_tile.png", "rb") as f:
     _leopard_bg_b64 = base64.b64encode(f.read()).decode()
@@ -131,11 +138,11 @@ with st.sidebar:
     st.caption("RoofKA solo responde con base en estos 3 documentos, citando la fuente exacta.")
 
     st.divider()
-    st.subheader("Preguntas de ejemplo")
-    pregunta_ejemplo = None
-    for ejemplo in EJEMPLOS_PREGUNTAS:
-        if st.button(ejemplo, use_container_width=True, type="primary"):
-            pregunta_ejemplo = ejemplo
+    st.subheader("Preguntas frecuentes")
+    pregunta_frecuente = None
+    for pregunta_faq in PREGUNTAS_FRECUENTES:
+        if st.button(pregunta_faq, use_container_width=True, type="primary"):
+            pregunta_frecuente = pregunta_faq
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": SALUDO_INICIAL}]
@@ -152,9 +159,9 @@ for i, msg in enumerate(st.session_state.messages):
         )
 
 if len(st.session_state.messages) == 1:
-    st.caption("👇 Prueba con una de las preguntas de ejemplo en el panel izquierdo, o escribe la tuya abajo.")
+    st.caption("👇 Prueba con una de las preguntas frecuentes en el panel izquierdo, o escribe la tuya abajo.")
 
-pregunta = st.chat_input("Escribe tu pregunta sobre garantías, procedimientos o RRHH...") or pregunta_ejemplo
+pregunta = st.chat_input("Escribe tu pregunta sobre garantías, procedimientos o RRHH...") or pregunta_frecuente
 
 if pregunta:
     st.session_state.messages.append({"role": "user", "content": pregunta})
