@@ -102,13 +102,30 @@ st.markdown(
     [data-testid="stChatMessage"] {
         margin-bottom: -0.6rem;
     }
+    .roof-a {
+        position: relative;
+        display: inline-block;
+    }
+    .roof-a::before {
+        content: '';
+        position: absolute;
+        top: -16px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 11px solid transparent;
+        border-right: 11px solid transparent;
+        border-bottom: 13px solid #232628;
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
 st.markdown(
-    "<h1 style='color:#EEAB59; font-size:44px; margin-bottom:0;'>RoofKA</h1>",
+    "<h1 style='color:#EEAB59; font-size:44px; margin-bottom:0;'>"
+    "RoofK<span class='roof-a'>A</span></h1>",
     unsafe_allow_html=True,
 )
 st.caption("Estás conversando con un agente de inteligencia artificial, no con una persona.")
