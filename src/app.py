@@ -178,6 +178,8 @@ with st.sidebar:
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": SALUDO_INICIAL}]
+if "feedback_dado" not in st.session_state:
+    st.session_state.feedback_dado = True  # no hay respuesta nueva pendiente de calificar
 
 for i, msg in enumerate(st.session_state.messages):
     avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
@@ -189,6 +191,32 @@ for i, msg in enumerate(st.session_state.messages):
             f"border-radius:10px; padding:12px 16px; font-size:15.5px; line-height:1.5;'>{_markdown_bold_to_html(msg['content'])}</div>",
             unsafe_allow_html=True,
         )
+
+        # Botones de feedback (tarjeta 8 - registrar ejecucion).
+        # Se colocan aqui, ligados a session_state, y NO dentro del
+        # bloque "if pregunta:" de mas abajo: st.chat_input() solo
+        # devuelve texto en la ejecucion donde se escribio, asi que en
+        # la ejecucion disparada por el clic en 👍/👎 "pregunta" ya
+        # vuelve a estar vacio y ese bloque completo se saltaria,
+        # perdiendo el clic antes de llamar a log_feedback(). Al usar
+        # una bandera en session_state, el boton se sigue mostrando
+        # (y el clic si se procesa) en la ejecucion siguiente.
+        es_ultimo_mensaje = i == len(st.session_state.messages) - 1
+        if msg["role"] == "assistant" and es_ultimo_mensaje and not st.session_state.feedback_dado:
+            st.markdown("<div style='margin-top:6px;'></div>", unsafe_allow_html=True)
+            col1, col2, _ = st.columns([0.1, 0.1, 0.8])
+            with col1:
+                if st.button("👍", key=f"like_{i}", type="primary"):
+                    log_feedback(st.session_state.messages[i - 1]["content"], msg["content"], "positivo")
+                    st.session_state.feedback_dado = True
+                    st.toast("¡Gracias por tu retroalimentación!")
+                    st.rerun()
+            with col2:
+                if st.button("👎", key=f"dislike_{i}"):
+                    log_feedback(st.session_state.messages[i - 1]["content"], msg["content"], "negativo")
+                    st.session_state.feedback_dado = True
+                    st.toast("Gracias, usaremos esto para mejorar a RoofKA.")
+                    st.rerun()
 
 if len(st.session_state.messages) == 1:
     st.caption("👇 Prueba con una de las preguntas frecuentes en el panel izquierdo, o escribe la tuya abajo.")
@@ -213,16 +241,7 @@ if pregunta:
             f"border-radius:10px; padding:12px 16px; font-size:15.5px; line-height:1.5;'>{_markdown_bold_to_html(respuesta)}</div>",
             unsafe_allow_html=True,
         )
-        st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
-
-        col1, col2, _ = st.columns([0.1, 0.1, 0.8])
-        with col1:
-            if st.button("👍", key=f"like_{len(st.session_state.messages)}", type="primary"):
-                log_feedback(pregunta, respuesta, "positivo")
-                st.toast("¡Gracias por tu retroalimentación!")
-        with col2:
-            if st.button("👎", key=f"dislike_{len(st.session_state.messages)}"):
-                log_feedback(pregunta, respuesta, "negativo")
-                st.toast("Gracias, usaremos esto para mejorar a RoofKA.")
 
     st.session_state.messages.append({"role": "assistant", "content": respuesta})
+    st.session_state.feedback_dado = False  # respuesta nueva, aun sin calificar
+    st.rerun()  # fuerza una ejecucion limpia para que los botones de feedback se muestren de forma consistente
