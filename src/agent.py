@@ -57,6 +57,16 @@ SIMILARITY_THRESHOLD = 0.45
 
 LOG_PATH = "logs_ejecucion.jsonl"
 
+# Preguntas de 1-2 palabras (ej. "contratista") pueden aparecer en mas
+# de un documento (Warranty y RRHH, por ejemplo). Con pocos fragmentos
+# de busqueda (top_k bajo), el contexto recuperado a veces viene solo
+# de un documento, produciendo respuestas incompletas o contradictorias
+# (detectado en pruebas reales con "closeout" y "contratista"). Por eso,
+# para preguntas cortas se amplia la busqueda (mas fragmentos), en vez
+# de bloquear la pregunta.
+PALABRAS_PARA_BUSQUEDA_AMPLIADA = 3
+TOP_K_AMPLIADO = 8
+
 SALUDO_INICIAL = (
     "¡Hola! ¿En qué puedo ayudarte hoy?"
 )
@@ -98,13 +108,19 @@ def _log_interaction(question: str, context: str, answer: str, elapsed_seconds: 
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
-def answer_question(question: str, index, metadata, top_k: int = 4, category: str | None = None) -> str:
+def answer_question(question: str, index, metadata, top_k: int = 6, category: str | None = None) -> str:
     """
     Punto de entrada principal del agente: recupera contexto relevante
     y genera una respuesta con RoofKA, o activa el fallback si no hay
     suficiente confianza en los resultados recuperados.
     """
     start_time = time.time()
+
+    # Preguntas cortas amplian la busqueda (mas fragmentos), para
+    # aumentar la probabilidad de cubrir mas de un documento cuando la
+    # palabra aparece en varios (ver PALABRAS_PARA_BUSQUEDA_AMPLIADA).
+    if len(question.split()) <= PALABRAS_PARA_BUSQUEDA_AMPLIADA:
+        top_k = max(top_k, TOP_K_AMPLIADO)
 
     results = search(question, index, metadata, top_k=top_k, category=category)
 
