@@ -60,7 +60,6 @@ LOG_PATH = "logs_ejecucion.jsonl"
 SALUDO_INICIAL = (
    "¡Hola! Soy RoofKA IA, tu agente de consulta interna. "
     "¿En qué puedo ayudarte hoy?"
-)
 
 FUERA_DE_ALCANCE = (
     "No tengo esa información en los documentos disponibles. "
