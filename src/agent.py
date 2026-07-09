@@ -58,9 +58,9 @@ SIMILARITY_THRESHOLD = 0.45
 LOG_PATH = "logs_ejecucion.jsonl"
 
 SALUDO_INICIAL = (
-    "¡Hola! Soy RoofKA, tu asistente de consulta interna. "
-    "Puedo responder preguntas basándome en los documentos de Warranty, "
-    "Manual de Procedimientos Operativos y Política de RRHH. "
+    "¡Hola! Soy RoofKA, tu agente de inteligencia artificial de consulta interna. "
+    "Puedo ayudarte con preguntas sobre garantías, procedimientos operativos y "
+    "políticas de RRHH, siempre citando la fuente exacta. "
     "¿En qué puedo ayudarte hoy?"
 )
 
