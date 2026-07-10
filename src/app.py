@@ -152,7 +152,7 @@ with st.sidebar:
         "- Manual de Procedimientos Operativos — *v1.1, jul 2026*\n"
         "- Política de Recursos Humanos y Compensación — *v1.0, jul 2026*"
     )
-    st.caption("RoofKA solo responde con base en estos 3 documentos, citando la fuente exacta.")
+    st.caption("RoofKA es el asistente de Roof LeopardRoofing Company y solo responde con base en estos 3 documentos, citando la fuente exacta.")
 
     st.divider()
     st.subheader("Preguntas frecuentes")
