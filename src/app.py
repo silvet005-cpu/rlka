@@ -158,7 +158,12 @@ with st.sidebar:
     st.subheader("Preguntas frecuentes")
     pregunta_frecuente = None
     for pregunta_faq in PREGUNTAS_FRECUENTES:
-        if st.button(pregunta_faq, use_container_width=True, type="primary"):
+        if st.button(
+            pregunta_faq,
+            use_container_width=True,
+            type="primary",
+            disabled=st.session_state.get("procesando", False),
+        ):
             pregunta_frecuente = pregunta_faq
 
     # Descarga del log de ejecucion (tarjeta 8 - registrar ejecucion).
@@ -180,6 +185,10 @@ if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": SALUDO_INICIAL}]
 if "feedback_dado" not in st.session_state:
     st.session_state.feedback_dado = True  # no hay respuesta nueva pendiente de calificar
+if "procesando" not in st.session_state:
+    st.session_state.procesando = False  # True mientras se espera la respuesta del agente
+if "pregunta_pendiente" not in st.session_state:
+    st.session_state.pregunta_pendiente = None
 
 for i, msg in enumerate(st.session_state.messages):
     avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
@@ -218,23 +227,32 @@ for i, msg in enumerate(st.session_state.messages):
                     st.toast("Gracias, usaremos esto para mejorar a RoofKA.")
                     st.rerun()
 
-if len(st.session_state.messages) == 1:
+if len(st.session_state.messages) == 1 and not st.session_state.procesando:
     st.caption("👇 Prueba con una de las preguntas frecuentes en el panel izquierdo, o escribe la tuya abajo.")
 
-pregunta = st.chat_input("Escribe tu pregunta sobre garantías, procedimientos o RRHH...") or pregunta_frecuente
+# Fase 1 — Envio: se limita a anotar la pregunta y bloquear la UI de
+# inmediato (sin llamar todavia a answer_question, que es lo lento).
+# Bloqueamos ANTES de procesar para que los botones/input ya se vean
+# deshabilitados durante toda la espera de Cohere, no solo al final.
+# Esto es lo que evita que una segunda pregunta se dispare mientras la
+# primera sigue en curso (ver docs/Log_Cambios_RLKA.md).
+pregunta_nueva = st.chat_input(
+    "Escribe tu pregunta sobre garantías, procedimientos o RRHH...",
+    disabled=st.session_state.procesando,
+) or pregunta_frecuente
 
-if pregunta:
-    st.session_state.messages.append({"role": "user", "content": pregunta})
-    with st.chat_message("user", avatar=AVATAR_USUARIO):
-        st.markdown(
-            f"<div style='background:#232628; color:#FDF5E8; "
-            f"border-radius:10px; padding:12px 16px; font-size:15.5px; line-height:1.5;'>{pregunta}</div>",
-            unsafe_allow_html=True,
-        )
+if pregunta_nueva and not st.session_state.procesando:
+    st.session_state.messages.append({"role": "user", "content": pregunta_nueva})
+    st.session_state.procesando = True
+    st.session_state.pregunta_pendiente = pregunta_nueva
+    st.rerun()
 
+# Fase 2 — Procesamiento: corre en la ejecucion siguiente, con la UI ya
+# bloqueada (botones e input deshabilitados) mientras se espera Cohere.
+if st.session_state.procesando:
     with st.chat_message("assistant", avatar=AVATAR_ROOFKA):
         with st.status("🔎 Buscando en los documentos disponibles...", expanded=False) as status:
-            respuesta = answer_question(pregunta, index, metadata)
+            respuesta = answer_question(st.session_state.pregunta_pendiente, index, metadata)
             status.update(label="Listo", state="complete", expanded=False)
         st.markdown(
             f"<div style='background:#FDF5E8; color:#232628; "
@@ -244,4 +262,6 @@ if pregunta:
 
     st.session_state.messages.append({"role": "assistant", "content": respuesta})
     st.session_state.feedback_dado = False  # respuesta nueva, aun sin calificar
-    st.rerun()  # fuerza una ejecucion limpia para que los botones de feedback se muestren de forma consistente
+    st.session_state.procesando = False
+    st.session_state.pregunta_pendiente = None
+    st.rerun()  # fuerza una ejecucion limpia: UI desbloqueada + botones de feedback consistentes
