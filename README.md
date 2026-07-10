@@ -64,7 +64,7 @@ rlka/
 ## Tecnologías
 
 - Python 3.11+
-- pdftotext (poppler-utils) — extracción de PDF (pdfplumber y PyMuPDF descartan la tabla de garantías; ver [`docs/Decisiones_Arquitectura_ADR_RLKA.docx`](docs/Decisiones_Arquitectura_ADR_RLKA.docx), ADR-006)
+- pdftotext (poppler-utils) — extracción de PDF (pdfplumber y PyMuPDF descartan la tabla de garantías; ver [`docs/Decisiones_Arquitectura_ADR_ROOFKA_final.docx`](docs/Decisiones_Arquitectura_ADR_ROOFKA_final.docx), ADR-006)
 - sentence-transformers (`paraphrase-multilingual-MiniLM-L12-v2`) — embeddings multilingües
 - FAISS — vector store
 - Cohere API (`command-a-03-2025`) — generación de respuestas
