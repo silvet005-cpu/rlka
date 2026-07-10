@@ -167,19 +167,25 @@ with st.sidebar:
             pregunta_frecuente = pregunta_faq
 
     # Descarga del log de ejecucion (tarjeta 8 - registrar ejecucion).
-    # Necesario porque el filesystem de Streamlit Community Cloud es
-    # efimero: feedback.jsonl se pierde en cada redeploy, asi que hay
-    # que poder bajarlo como evidencia antes de que eso pase.
-    if os.path.exists(FEEDBACK_LOG_PATH):
-        st.divider()
-        with open(FEEDBACK_LOG_PATH, "rb") as f:
-            st.download_button(
-                "⬇️ Descargar feedback.jsonl",
-                data=f,
-                file_name="feedback.jsonl",
-                mime="application/jsonl",
-                use_container_width=True,
-            )
+    # Agrupado en un expander, colapsado por defecto: es una herramienta
+    # de auditoria/evidencia, no parte del flujo de uso normal del
+    # agente, asi que no debe competir visualmente con las preguntas
+    # frecuentes. El filesystem de Streamlit Community Cloud es efimero
+    # (feedback.jsonl se pierde en cada redeploy), de ahi la necesidad
+    # de poder bajarlo como evidencia antes de que eso pase.
+    with st.expander("🗂️ Registro de ejecución"):
+        st.caption("Historial de preguntas calificadas por el usuario (👍/👎), usado como evidencia de ejecución en producción.")
+        if os.path.exists(FEEDBACK_LOG_PATH):
+            with open(FEEDBACK_LOG_PATH, "rb") as f:
+                st.download_button(
+                    "⬇️ Descargar feedback.jsonl",
+                    data=f,
+                    file_name="feedback.jsonl",
+                    mime="application/jsonl",
+                    use_container_width=True,
+                )
+        else:
+            st.caption("Aún no hay preguntas calificadas en esta sesión del servidor.")
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": SALUDO_INICIAL}]
