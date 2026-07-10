@@ -88,7 +88,7 @@ streamlit run src/app.py
 
 La aplicación está desplegada en **Streamlit Community Cloud**, con URL pública: [rlka-roofka.streamlit.app](https://rlka-roofka.streamlit.app)
 
-> **Nota sobre Oracle Cloud Infrastructure (OCI):** el programa recomienda el uso de OCI, pero no lo exige — se confirmó directamente con el canal de soporte oficial del programa (OneSource) que el único requisito real es que el proyecto sea accesible mediante una URL pública. Por esa razón, y para evitar agregar una dependencia de red innecesaria a un despliegue ya estable y validado, el proyecto no integra servicios de OCI. Ver detalle completo en [`docs/Log_Cambios_RLKA.md`](docs/Log_Cambios_RLKA.md).
+> **Nota sobre Oracle Cloud Infrastructure (OCI):** el programa recomienda el uso de OCI, pero no lo exige — se confirmó directamente con el canal de soporte oficial del programa (OneSource) que el único requisito real es que el proyecto sea accesible mediante una URL pública. Por esa razón, y para evitar agregar una dependencia de red innecesaria a un despliegue ya estable y validado, el proyecto no integra servicios de OCI. Ver detalle completo en [`docs/Log_Cambios_RLKA(RoofKA).md`](docs/Log_Cambios_RLKA%28RoofKA%29.md).
 
 ---
 
@@ -133,7 +133,7 @@ Evidencia de ejecución en la nube, incluyendo el flujo de feedback en vivo: [ve
 
 Cada respuesta calificada por un usuario (👍/👎) queda registrada con pregunta, respuesta, y marca de tiempo — ejemplo real en [`docs/feedback.jsonl`](docs/feedback.jsonl). El archivo puede descargarse en cualquier momento desde el panel lateral de la app.
 
-Historial de hallazgos y correcciones encontradas durante pruebas en producción: [`docs/Log_Cambios_RLKA.md`](docs/Log_Cambios_RLKA.md).
+Historial de hallazgos y correcciones encontradas durante pruebas en producción: [`docs/Log_Cambios_RLKA(RoofKA).md`](docs/Log_Cambios_RLKA%28RoofKA%29.md).
 
 ## Limitaciones conocidas
 
