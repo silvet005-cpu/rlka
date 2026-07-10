@@ -166,6 +166,23 @@ with st.sidebar:
         ):
             pregunta_frecuente = pregunta_faq
 
+    st.divider()
+
+    # Tip y Registro de ejecucion van agrupados aqui, DESPUES de las
+    # preguntas frecuentes: son herramientas secundarias/auxiliares, no
+    # el flujo principal de uso, asi que se colocan al final para no
+    # competir visualmente con los botones de FAQ (que usan
+    # type="primary" y deben ganar la atencion primero). Ambos usan el
+    # mismo emoji de referencia a la marca (leopardo) para verse
+    # consistentes entre si.
+    with st.expander("🐆 Tip: cómo preguntar mejor"):
+        st.caption(
+            "Para respuestas más precisas, incluye el tema específico — por ejemplo, "
+            "*'garantía de un techo completo'* en vez de solo *'garantía'*, o "
+            "*'checklist de cierre'* en vez de *'closeout'*. RoofKA entiende preguntas "
+            "cortas, pero entre más contexto le des, más precisa será la respuesta."
+        )
+
     # Descarga del log de ejecucion (tarjeta 8 - registrar ejecucion).
     # Agrupado en un expander, colapsado por defecto: es una herramienta
     # de auditoria/evidencia, no parte del flujo de uso normal del
@@ -173,7 +190,7 @@ with st.sidebar:
     # frecuentes. El filesystem de Streamlit Community Cloud es efimero
     # (feedback.jsonl se pierde en cada redeploy), de ahi la necesidad
     # de poder bajarlo como evidencia antes de que eso pase.
-    with st.expander("🗂️ Registro de ejecución"):
+    with st.expander("🐆 Registro de ejecución"):
         st.caption("Historial de preguntas calificadas por el usuario (👍/👎), usado como evidencia de ejecución en producción.")
         if os.path.exists(FEEDBACK_LOG_PATH):
             with open(FEEDBACK_LOG_PATH, "rb") as f:
