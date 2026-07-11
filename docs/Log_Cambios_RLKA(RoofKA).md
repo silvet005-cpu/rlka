@@ -52,7 +52,7 @@ Registro cronológico de correcciones y hallazgos técnicos relevantes durante e
 
 **Contexto:** la tarjeta 7 del tablero de Trello indicaba textualmente "es obligatorio usar al menos un servicio del ecosistema de OCI en este proceso de despliegue". Antes de invertir tiempo en una integración con Object Storage, se consultó directamente al canal de soporte oficial del programa (OneSource) para confirmar el alcance real del requisito.
 
-**Respuesta oficial (OneSource, Slack del programa):** "No es obligatorio usar Oracle Cloud Infrastructure (OCI) para el Challenge. Puedes realizar el deploy en la plataforma que prefieras, siempre que tu proyecto sea accesible mediante una URL pública. OCI es solo una recomendación del programa."
+**Respuesta oficial (OneSource, Discord del programa):** "No es obligatorio usar Oracle Cloud Infrastructure (OCI) para el Challenge. Puedes realizar el deploy en la plataforma que prefieras, siempre que tu proyecto sea accesible mediante una URL pública. OCI es solo una recomendación del programa."
 
 **Decisión:** no se integra ningún servicio de OCI. El despliegue permanece en Streamlit Community Cloud (`rlka-roofka.streamlit.app`), que ya cumple el requisito real (accesibilidad vía URL pública), evitando agregar una dependencia de red innecesaria a un despliegue ya estable y validado.
 
