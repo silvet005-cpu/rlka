@@ -128,6 +128,24 @@ def _log_interaction(question: str, context: str, answer: str, elapsed_seconds: 
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
+def construir_consulta_busqueda(question: str) -> tuple[str, bool]:
+    """
+    Construye el texto que se usara para el embedding de busqueda,
+    expandiendolo si la pregunta es corta (ver PREFIJO_EXPANSION_CONSULTA_CORTA).
+    Expuesta como funcion separada para poder inspeccionar/depurar que
+    consulta se esta generando realmente (ver debug temporal en app.py).
+
+    Returns:
+        Tupla (consulta_busqueda, es_pregunta_corta).
+    """
+    es_pregunta_corta = len(question.split()) <= PALABRAS_PARA_BUSQUEDA_AMPLIADA
+    if es_pregunta_corta:
+        consulta_busqueda = f"{PREFIJO_EXPANSION_CONSULTA_CORTA} {question}"
+    else:
+        consulta_busqueda = question
+    return consulta_busqueda, es_pregunta_corta
+
+
 def answer_question(question: str, index, metadata, top_k: int = 6, category: str | None = None) -> str:
     """
     Punto de entrada principal del agente: recupera contexto relevante
@@ -136,22 +154,9 @@ def answer_question(question: str, index, metadata, top_k: int = 6, category: st
     """
     start_time = time.time()
 
-    # Preguntas cortas amplian la busqueda (mas fragmentos), para
-    # aumentar la probabilidad de cubrir mas de un documento cuando la
-    # palabra aparece en varios (ver PALABRAS_PARA_BUSQUEDA_AMPLIADA).
-    #
-    # Ademas, se expande el TEXTO usado unicamente para el embedding de
-    # busqueda (no la pregunta original, que se preserva para el prompt
-    # de Cohere y para el log) -- esto le da al modelo de embeddings
-    # mas "forma de oracion" para comparar, corrigiendo el caso real de
-    # "nomina" y "closeout" quedando por debajo del umbral de confianza
-    # como palabra suelta (ver PREFIJO_EXPANSION_CONSULTA_CORTA).
-    es_pregunta_corta = len(question.split()) <= PALABRAS_PARA_BUSQUEDA_AMPLIADA
+    consulta_busqueda, es_pregunta_corta = construir_consulta_busqueda(question)
     if es_pregunta_corta:
         top_k = max(top_k, TOP_K_AMPLIADO)
-        consulta_busqueda = f"{PREFIJO_EXPANSION_CONSULTA_CORTA} {question}"
-    else:
-        consulta_busqueda = question
 
     results = search(consulta_busqueda, index, metadata, top_k=top_k, category=category)
 
