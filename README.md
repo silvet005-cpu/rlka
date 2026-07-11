@@ -66,7 +66,7 @@ rlka/
 ## Tecnologías
 
 - Python 3.11+
-[Ver ADR completo (PDF)](docs/Decisiones_Arquitectura_ADR_ROOFKA_final.pdf) · [Descargar Word](docs/Decisiones_Arquitectura_ADR_ROOFKA_final.docx)
+- pdftotext (poppler-utils) — extracción de PDF (pdfplumber y PyMuPDF descartan la tabla de garantías; ver [ADR-006 (PDF)](docs/Decisiones_Arquitectura_ADR_ROOFKA_final.pdf) · [Word](docs/Decisiones_Arquitectura_ADR_ROOFKA_final.docx))
 - sentence-transformers (`paraphrase-multilingual-MiniLM-L12-v2`) — embeddings multilingües
 - FAISS — vector store
 - Cohere API (`command-a-03-2025`) — generación de respuestas
