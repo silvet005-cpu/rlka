@@ -92,6 +92,12 @@ La aplicación está desplegada en **Streamlit Community Cloud**, con URL públi
 
 > **Nota sobre Oracle Cloud Infrastructure (OCI):** el programa recomienda el uso de OCI, pero no lo exige — se confirmó directamente con el canal de soporte oficial del programa (OneSource) que el único requisito real es que el proyecto sea accesible mediante una URL pública. Por esa razón, y para evitar agregar una dependencia de red innecesaria a un despliegue ya estable y validado, el proyecto no integra servicios de OCI. Ver detalle completo en [`docs/Log_Cambios_RLKA(RoofKA).md`](docs/Log_Cambios_RLKA%28RoofKA%29.md).
 
+### Evidencia del despliegue
+
+- 🎥 [Video de ejecución en producción](docs/Evidencia_Ejecucion_RLKA_2026-07-09.mp4) — flujo completo de pregunta, respuesta con citas, y feedback 👍/👎 en vivo
+- 🖼️ [Captura — pregunta combinada (clasificación de contratista + garantía)](docs/Evidencia_Pregunta_Clasificacion_contratista_RLKA.png)
+- 🖼️ [Captura — pregunta fuera de alcance (fallback sin inventar respuesta)](docs/Evidencia_Pregunta_Fuera_Alcance_RLKA.png)
+
 ---
 
 ## Seguridad
@@ -131,7 +137,7 @@ Más ejemplos validados por categoría (variaciones de tono, errores de escritur
 
 ## Registro de ejecución
 
-Evidencia de ejecución en la nube, incluyendo el flujo de feedback en vivo: [ver videos en Google Drive](https://drive.google.com/drive/folders/1VrOO6QO7D-qpWFzlUr20BZUHeDKjgcc2?usp=drive_link)
+Evidencia adicional de ejecución en la nube (más allá de lo ya enlazado en la sección de Despliegue): [ver videos en Google Drive](https://drive.google.com/drive/folders/1VrOO6QO7D-qpWFzlUr20BZUHeDKjgcc2?usp=drive_link)
 
 Cada respuesta calificada por un usuario (👍/👎) queda registrada con pregunta, respuesta, y marca de tiempo — ejemplo real en [`docs/feedback.jsonl`](docs/feedback.jsonl). El archivo puede descargarse en cualquier momento desde el panel lateral de la app.
 
