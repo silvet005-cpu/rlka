@@ -61,4 +61,23 @@ Registro cronológico de correcciones y hallazgos técnicos relevantes durante e
 
 ---
 
+## 2026-07-10 — Retrieval fallaba en preguntas de una sola palabra técnica ("nómina", "closeout")
+
+**Contexto:** durante pruebas de la categoría 6 del log de variaciones (preguntas cortas), "contratista" respondía correctamente, pero "nómina" y "closeout" activaban el fallback ("no tengo esa información") aunque el contenido sí existe en `Politica_RRHH_Dummy.pdf` y `Manual_Procedimientos_Operativos_Dummy.pdf` respectivamente. Se confirmó que no era un problema de typo probando también con "claseout".
+
+**Hallazgo:** el fix anterior de preguntas cortas (ampliar `top_k` a 8) no ataca la causa raíz. El umbral de confianza (`SIMILARITY_THRESHOLD = 0.45`) se evalúa sobre el mejor resultado de la búsqueda, y ese resultado nunca llega a superarlo para ciertas palabras sueltas — el modelo de embeddings (`paraphrase-multilingual-MiniLM-L12-v2`) está entrenado para comparar el significado de oraciones completas, no palabras aisladas. "Contratista" pasaba por aparecer en contextos ricos dentro de RRHH; "nómina" y "closeout" no generaban suficiente señal semántica como palabra suelta. Se confirmó manualmente que expandir la consulta a "información sobre nómina" sí recupera el contenido correcto.
+
+**Corrección:** se agregó la función `construir_consulta_busqueda()` en `agent.py`, que expande el TEXTO usado únicamente para el embedding de búsqueda cuando la pregunta tiene ≤3 palabras (prefijo "información sobre"), sin modificar la pregunta original que ve el usuario, el prompt de Cohere, ni el umbral de confianza — evitando debilitar la protección contra alucinaciones.
+
+**Archivo afectado:** `src/agent.py`
+**Commit:** `fix: mejorar retrieval de consultas cortas`
+
+**Nota sobre el proceso de validación:** la primera prueba en producción tras el commit pareció indicar que el fix no funcionaba ("nómina" seguía en fallback). Se descartó revertir el código sin evidencia y, en su lugar, se agregó temporalmente una línea de debug (`commit: debug: mostrar consulta de búsqueda real`) que mostraba en pantalla la consulta real usada para la búsqueda. Esto permitió confirmar que el problema era un retraso del redeploy automático de Streamlit Community Cloud, no un error de lógica. Tras el redeploy, "nómina" y "closeout" respondieron correctamente con Cohere en producción. La línea de debug se removió (`commit: chore: quitar debug temporal de consulta de búsqueda, fix confirmado en producción`) una vez confirmado.
+
+**Validación:** confirmado en producción para los 3 casos de la categoría 6 (`contratista`, `nómina`, `closeout`) — ver `docs/Log_Pruebas_Preguntas_RLKA.md`.
+
+**Relacionado:** también se movió el bloque "💡 Tip: cómo preguntar mejor" del área de chat al sidebar, agrupado junto a "Registro de ejecución" (`commit: refactor: mover Tip al sidebar`), para que quede accesible de forma persistente durante toda la sesión sin competir visualmente con los botones de "Preguntas frecuentes".
+
+---
+
 *Este documento se actualiza conforme surgen nuevos hallazgos relevantes durante el desarrollo y las pruebas en producción.*
