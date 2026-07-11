@@ -72,7 +72,7 @@ rlka/
 
 ## Metodología de trabajo
 
-El desarrollo se organizó en un tablero Kanban (Trello) con tarjetas por etapa del pipeline (ingesta, indexación, agente, interfaz, pruebas, despliegue, registro de ejecución) y checklists separados por nivel de prioridad para el cierre final. Cada corrección relevante encontrada durante pruebas en producción quedó documentada de forma independiente al historial de commits, para mantener trazabilidad de *qué* cambió y *por qué*.
+El desarrollo se organizó en un tablero Kanban ([Trello](https://trello.com/b/3nptA0Sw/silvia-zv-alura-challenge)) con tarjetas por etapa del pipeline (ingesta, indexación, agente, interfaz, pruebas, despliegue, registro de ejecución) y checklists separados por nivel de prioridad para el cierre final. Cada corrección relevante encontrada durante pruebas en producción quedó documentada de forma independiente al historial de commits, para mantener trazabilidad de *qué* cambió y *por qué*.
 
 ---
 
