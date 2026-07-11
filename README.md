@@ -11,6 +11,8 @@
 
 RLKA (Roof Leopard Knowledge Agent) es un agente de inteligencia artificial que responde preguntas en lenguaje natural sobre la documentación interna de Roof Leopard Roofing Company. Cubre 3 documentos fuente: Política de Garantía (Warranty), Manual de Procedimientos Operativos, y Política de Recursos Humanos y Compensación.
 
+> **Nota sobre nombres:** "RLKA" es el nombre técnico del proyecto (siglas de Roof Leopard Knowledge Agent), usado en el repositorio, la documentación y los ADRs. "RoofKA" es el nombre de personalidad del agente dentro de la interfaz de chat — más fácil de pronunciar y con un nivel de personalización adicional para quien lo usa a diario. Ambos se refieren al mismo agente.
+
 El agente usa una arquitectura RAG: busca los fragmentos más relevantes de los documentos indexados y genera una respuesta basada únicamente en ese contenido, citando siempre el documento y la página exacta de origen. Si una pregunta está fuera del alcance de los 3 documentos disponibles, lo indica explícitamente en vez de inventar una respuesta.
 
 Antes de RLKA, confirmar una política (por ejemplo, la duración de una garantía o el proceso de clasificación de un contratista) requería buscar manualmente en los PDFs, sin trazabilidad de qué versión se consultó ni certeza de haber encontrado la sección correcta.
