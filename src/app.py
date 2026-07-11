@@ -42,7 +42,7 @@ if "COHERE_API_KEY" not in os.environ and "COHERE_API_KEY" in st.secrets:
 
 from ingest import load_and_chunk_documents
 from vectorstore import build_vectorstore
-from agent import answer_question, SALUDO_INICIAL
+from agent import answer_question, SALUDO_INICIAL, construir_consulta_busqueda
 
 FEEDBACK_LOG_PATH = "feedback.jsonl"
 
@@ -275,6 +275,11 @@ if pregunta_nueva and not st.session_state.procesando:
 if st.session_state.procesando:
     with st.chat_message("assistant", avatar=AVATAR_ROOFKA):
         with st.status("🔎 Buscando en los documentos disponibles...", expanded=False) as status:
+            # DEBUG TEMPORAL (quitar despues de confirmar el fix de
+            # retrieval con "nomina"/"closeout" en produccion): muestra
+            # la consulta real usada para el embedding de busqueda.
+            _consulta_debug, _es_corta_debug = construir_consulta_busqueda(st.session_state.pregunta_pendiente)
+            st.caption(f"🐛 debug — consulta de búsqueda: `{_consulta_debug}` (expandida: {_es_corta_debug})")
             respuesta = answer_question(st.session_state.pregunta_pendiente, index, metadata)
             status.update(label="Listo", state="complete", expanded=False)
         st.markdown(
