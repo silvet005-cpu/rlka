@@ -4,7 +4,7 @@
 
 🔗 **App en producción:** [rlka-roofka.streamlit.app](https://rlka-roofka.streamlit.app)
 📦 Proyecto desarrollado para el **Oracle Tech Builder Challenge (Alura ONE)**.
-
+> 🚧 **En desarrollo:** la rama [`v2-ui-glassmorphism`](https://github.com/silvet005-cpu/rlka/tree/v2-ui-glassmorphism) contiene una v2.0 en progreso con mejoras de UI/UX (glassmorphism, modo oscuro, selector de idioma ES/EN/PT, nuevo layout y personaje). La versión en producción de arriba corresponde a la entrega evaluada del challenge y no se ve afectada.
 ---
 
 ## Descripción
