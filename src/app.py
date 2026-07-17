@@ -32,6 +32,68 @@ def _markdown_bold_to_html(text: str) -> str:
     """
     return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
 
+
+# Paletas de tema centralizadas (v2.0 — mejoras UI/UX). Mantener TODOS
+# los colores dependientes de tema en este unico diccionario evita
+# duplicar valores hardcodeados en cada f-string de la interfaz.
+THEMES = {
+    False: {  # modo claro
+        "app_bg": "#FDF5E8",
+        "bubble_assistant_bg": "rgba(255, 255, 255, 0.55)",
+        "bubble_assistant_border": "rgba(255, 255, 255, 0.6)",
+        "bubble_assistant_text": "#232628",
+        "bubble_user_bg": "rgba(238, 171, 89, 0.92)",
+        "bubble_user_border": "rgba(238, 171, 89, 0.4)",
+        "bubble_user_text": "#412402",
+    },
+    True: {  # modo oscuro
+        "app_bg": "#14161A",
+        "bubble_assistant_bg": "rgba(255, 255, 255, 0.06)",
+        "bubble_assistant_border": "rgba(255, 255, 255, 0.12)",
+        "bubble_assistant_text": "#F1EFE8",
+        "bubble_user_bg": "rgba(238, 171, 89, 0.9)",
+        "bubble_user_border": "rgba(238, 171, 89, 0.3)",
+        "bubble_user_text": "#2B1600",
+    },
+}
+
+
+def get_theme_css(dark: bool) -> str:
+    """
+    Devuelve el bloque <style> completo para el tema activo (claro u
+    oscuro), incluyendo el efecto de vidrio esmerilado (glassmorphism)
+    de las burbujas de chat via backdrop-filter. Centralizar esto aqui
+    evita tener que duplicar colores en cada punto donde se renderiza
+    un mensaje.
+    """
+    t = THEMES[dark]
+    return f"""
+    <style>
+    [data-testid="stAppViewContainer"] {{
+        background-color: {t['app_bg']} !important;
+    }}
+    .chat-bubble {{
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 15.5px;
+        line-height: 1.5;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 0.5px solid transparent;
+    }}
+    .chat-bubble-assistant {{
+        background: {t['bubble_assistant_bg']};
+        border-color: {t['bubble_assistant_border']};
+        color: {t['bubble_assistant_text']};
+    }}
+    .chat-bubble-user {{
+        background: {t['bubble_user_bg']};
+        border-color: {t['bubble_user_border']};
+        color: {t['bubble_user_text']};
+    }}
+    </style>
+    """
+
 # Puente de compatibilidad: en Streamlit Community Cloud, las API keys
 # se configuran en "Secrets" (st.secrets), no en un archivo .env local.
 # Si la key no esta ya en las variables de entorno, la tomamos de
@@ -47,6 +109,9 @@ from agent import answer_question, SALUDO_INICIAL
 FEEDBACK_LOG_PATH = "feedback.jsonl"
 
 st.set_page_config(page_title="RoofKA — RLKA", page_icon="docs/roofka_avatar.png")
+
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = False
 
 
 @st.cache_resource
@@ -123,6 +188,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+st.markdown(get_theme_css(st.session_state.dark_mode), unsafe_allow_html=True)
+
 st.markdown(
     "<h1 style='color:#EEAB59; font-size:44px; margin-bottom:0;'>"
     "RoofK<span class='roof-a'>A</span></h1>",
@@ -153,6 +220,8 @@ with st.sidebar:
         "- Política de Recursos Humanos y Compensación — *v1.0, jul 2026*"
     )
     st.caption("RoofKA es el asistente de Roof Leopard Roofing Company y solo responde con base en estos 3 documentos, citando la fuente exacta.")
+
+    st.toggle("🌙 Modo oscuro", key="dark_mode")
 
     st.divider()
     st.subheader("Preguntas frecuentes")
@@ -215,12 +284,10 @@ if "pregunta_pendiente" not in st.session_state:
 
 for i, msg in enumerate(st.session_state.messages):
     avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
-    bg_color = "#FDF5E8" if msg["role"] == "assistant" else "#232628"
-    text_color = "#232628" if msg["role"] == "assistant" else "#FDF5E8"
+    bubble_class = "chat-bubble-assistant" if msg["role"] == "assistant" else "chat-bubble-user"
     with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(
-            f"<div style='background:{bg_color}; color:{text_color}; "
-            f"border-radius:10px; padding:12px 16px; font-size:15.5px; line-height:1.5;'>{_markdown_bold_to_html(msg['content'])}</div>",
+            f"<div class='chat-bubble {bubble_class}'>{_markdown_bold_to_html(msg['content'])}</div>",
             unsafe_allow_html=True,
         )
 
@@ -278,8 +345,7 @@ if st.session_state.procesando:
             respuesta = answer_question(st.session_state.pregunta_pendiente, index, metadata)
             status.update(label="Listo", state="complete", expanded=False)
         st.markdown(
-            f"<div style='background:#FDF5E8; color:#232628; "
-            f"border-radius:10px; padding:12px 16px; font-size:15.5px; line-height:1.5;'>{_markdown_bold_to_html(respuesta)}</div>",
+            f"<div class='chat-bubble chat-bubble-assistant'>{_markdown_bold_to_html(respuesta)}</div>",
             unsafe_allow_html=True,
         )
 
