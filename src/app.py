@@ -123,6 +123,16 @@ def get_theme_css(dark: bool) -> str:
     }}
     .typing-dot:nth-child(2) {{ animation-delay: 0.15s; }}
     .typing-dot:nth-child(3) {{ animation-delay: 0.3s; margin-right: 0; }}
+    .feedback-chip {{
+        display: inline-block;
+        margin-top: 6px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        background: rgba(80, 160, 60, 0.15);
+        color: {"#8FD65C" if dark else "#27500A"};
+        border: 0.5px solid rgba(80, 160, 60, 0.3);
+    }}
     </style>
     """
 
@@ -155,6 +165,14 @@ def extract_source_chip_label(text: str) -> str | None:
 # agent.py (que usa os.getenv) funcione igual en ambos entornos.
 if "COHERE_API_KEY" not in os.environ and "COHERE_API_KEY" in st.secrets:
     os.environ["COHERE_API_KEY"] = st.secrets["COHERE_API_KEY"]
+
+# Clave de acceso administrador (v2.0): protege la descarga del log de
+# feedback, que antes era visible para cualquier persona que abriera
+# el sidebar. Mismo patron de compatibilidad que COHERE_API_KEY: en
+# Streamlit Cloud se configura en Secrets; en local, en .env.
+if "ADMIN_PASSWORD" not in os.environ and "ADMIN_PASSWORD" in st.secrets:
+    os.environ["ADMIN_PASSWORD"] = st.secrets["ADMIN_PASSWORD"]
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
 from ingest import load_and_chunk_documents
 from vectorstore import build_vectorstore
@@ -266,6 +284,65 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Panel decorativo a la derecha (v2.0 — inspirado en referencia de
+# NovaBank/RoofKA compartida por Silvia). Es puramente visual: NO
+# incluye KPIs, botones de accion ni datos de CRM/ProLine, ya que
+# RoofKA solo consulta 3 documentos PDF estaticos y ese tipo de
+# contenido implicaria funcionalidad que este proyecto no tiene.
+# Se implementa con position:fixed (no como columna de Streamlit) para
+# no reestructurar todo el flujo existente del chat; se oculta en
+# pantallas angostas via media query, ya que un panel fijo de este
+# tipo no es viable en movil.
+with open("docs/roofka_mascot_hero.jpg", "rb") as f:
+    _mascot_b64 = base64.b64encode(f.read()).decode()
+
+_tema_actual = THEMES[st.session_state.dark_mode]
+_texto_mascota_color = "#F1EFE8" if st.session_state.dark_mode else "#232628"
+
+st.markdown(
+    f"""
+    <style>
+    .block-container {{
+        padding-right: 300px !important;
+    }}
+    .mascot-panel {{
+        position: fixed;
+        top: 3.75rem;
+        right: 0;
+        width: 300px;
+        height: calc(100vh - 3.75rem);
+        background-color: {_tema_actual['app_bg']};
+        border-left: 0.5px solid {_tema_actual['bubble_assistant_border']};
+        overflow: hidden;
+        z-index: 1;
+    }}
+    .mascot-panel img {{
+        width: 100%;
+        display: block;
+        object-fit: cover;
+    }}
+    .mascot-quote {{
+        padding: 18px 22px;
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: {_texto_mascota_color};
+    }}
+    @media (max-width: 900px) {{
+        .mascot-panel {{ display: none; }}
+        .block-container {{ padding-right: 1.5rem !important; }}
+    }}
+    </style>
+    <div class="mascot-panel">
+        <img src="data:image/jpeg;base64,{_mascot_b64}" />
+        <div class="mascot-quote">
+            Respuestas basadas únicamente en los documentos oficiales.<br/>
+            <strong>Consultas más rápidas, sin adivinar.</strong>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 with st.sidebar:
     st.subheader("Documentos disponibles")
     st.markdown(
@@ -315,17 +392,46 @@ with st.sidebar:
     # de poder bajarlo como evidencia antes de que eso pase.
     with st.expander("🐆 Registro de ejecución"):
         st.caption("Historial de preguntas calificadas por el usuario (👍/👎), usado como evidencia de ejecución en producción.")
-        if os.path.exists(FEEDBACK_LOG_PATH):
-            with open(FEEDBACK_LOG_PATH, "rb") as f:
-                st.download_button(
-                    "⬇️ Descargar feedback.jsonl",
-                    data=f,
-                    file_name="feedback.jsonl",
-                    mime="application/jsonl",
-                    use_container_width=True,
-                )
+        if "admin_autenticado" not in st.session_state:
+            st.session_state.admin_autenticado = False
+
+        if st.session_state.admin_autenticado:
+            if os.path.exists(FEEDBACK_LOG_PATH):
+                with open(FEEDBACK_LOG_PATH, "rb") as f:
+                    st.download_button(
+                        "⬇️ Descargar feedback.jsonl",
+                        data=f,
+                        file_name="feedback.jsonl",
+                        mime="application/jsonl",
+                        use_container_width=True,
+                    )
+            else:
+                st.caption("Aún no hay preguntas calificadas en esta sesión del servidor.")
+        elif not ADMIN_PASSWORD:
+            # Si no se configuro ninguna clave (entorno local sin
+            # secrets), no bloqueamos por accidente el flujo de trabajo
+            # de quien esta desarrollando la app.
+            st.caption("⚠️ ADMIN_PASSWORD no configurada — descarga sin restricción en este entorno.")
+            if os.path.exists(FEEDBACK_LOG_PATH):
+                with open(FEEDBACK_LOG_PATH, "rb") as f:
+                    st.download_button(
+                        "⬇️ Descargar feedback.jsonl",
+                        data=f,
+                        file_name="feedback.jsonl",
+                        mime="application/jsonl",
+                        use_container_width=True,
+                    )
         else:
-            st.caption("Aún no hay preguntas calificadas en esta sesión del servidor.")
+            st.caption("🔒 Acceso restringido — solicita la clave al administrador de Roof Leopard.")
+            clave_ingresada = st.text_input(
+                "Clave de administrador", type="password", key="admin_password_input"
+            )
+            if st.button("Verificar", use_container_width=True):
+                if clave_ingresada == ADMIN_PASSWORD:
+                    st.session_state.admin_autenticado = True
+                    st.rerun()
+                else:
+                    st.error("Clave incorrecta.")
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": SALUDO_INICIAL}]
@@ -335,6 +441,8 @@ if "procesando" not in st.session_state:
     st.session_state.procesando = False  # True mientras se espera la respuesta del agente
 if "pregunta_pendiente" not in st.session_state:
     st.session_state.pregunta_pendiente = None
+if "feedback_por_indice" not in st.session_state:
+    st.session_state.feedback_por_indice = {}  # {indice_mensaje: "positivo"/"negativo"}
 
 for i, msg in enumerate(st.session_state.messages):
     avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
@@ -358,22 +466,34 @@ for i, msg in enumerate(st.session_state.messages):
         # perdiendo el clic antes de llamar a log_feedback(). Al usar
         # una bandera en session_state, el boton se sigue mostrando
         # (y el clic si se procesa) en la ejecucion siguiente.
-        es_ultimo_mensaje = i == len(st.session_state.messages) - 1
-        if msg["role"] == "assistant" and es_ultimo_mensaje and not st.session_state.feedback_dado:
-            st.markdown("<div style='margin-top:6px;'></div>", unsafe_allow_html=True)
-            col1, col2, _ = st.columns([0.1, 0.1, 0.8])
-            with col1:
-                if st.button("👍", key=f"like_{i}", type="primary"):
-                    log_feedback(st.session_state.messages[i - 1]["content"], msg["content"], "positivo")
-                    st.session_state.feedback_dado = True
-                    st.toast("¡Gracias por tu retroalimentación!")
-                    st.rerun()
-            with col2:
-                if st.button("👎", key=f"dislike_{i}"):
-                    log_feedback(st.session_state.messages[i - 1]["content"], msg["content"], "negativo")
-                    st.session_state.feedback_dado = True
-                    st.toast("Gracias, usaremos esto para mejorar a RoofKA.")
-                    st.rerun()
+        if i in st.session_state.feedback_por_indice:
+            # Confirmacion visual persistente (no solo el toast, que
+            # desaparece rapido): el usuario puede ver, incluso
+            # revisando el historial despues, que su feedback quedo
+            # registrado.
+            st.markdown(
+                "<span class='feedback-chip'>✓ ¡Gracias por tu feedback!</span>",
+                unsafe_allow_html=True,
+            )
+        else:
+            es_ultimo_mensaje = i == len(st.session_state.messages) - 1
+            if msg["role"] == "assistant" and es_ultimo_mensaje and not st.session_state.feedback_dado:
+                st.markdown("<div style='margin-top:6px;'></div>", unsafe_allow_html=True)
+                col1, col2, _ = st.columns([0.1, 0.1, 0.8])
+                with col1:
+                    if st.button("👍", key=f"like_{i}", type="primary"):
+                        log_feedback(st.session_state.messages[i - 1]["content"], msg["content"], "positivo")
+                        st.session_state.feedback_por_indice[i] = "positivo"
+                        st.session_state.feedback_dado = True
+                        st.toast("¡Gracias por tu retroalimentación!")
+                        st.rerun()
+                with col2:
+                    if st.button("👎", key=f"dislike_{i}"):
+                        log_feedback(st.session_state.messages[i - 1]["content"], msg["content"], "negativo")
+                        st.session_state.feedback_por_indice[i] = "negativo"
+                        st.session_state.feedback_dado = True
+                        st.toast("Gracias, usaremos esto para mejorar a RoofKA.")
+                        st.rerun()
 
 if len(st.session_state.messages) == 1 and not st.session_state.procesando:
     st.caption("👇 Prueba con una de las preguntas frecuentes en el panel izquierdo, o escribe la tuya abajo.")
