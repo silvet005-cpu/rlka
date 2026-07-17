@@ -45,6 +45,9 @@ THEMES = {
         "bubble_user_bg": "rgba(238, 171, 89, 0.92)",
         "bubble_user_border": "rgba(238, 171, 89, 0.4)",
         "bubble_user_text": "#412402",
+        "chip_bg": "rgba(153, 60, 29, 0.12)",
+        "chip_text": "#712B13",
+        "chip_border": "rgba(153, 60, 29, 0.25)",
     },
     True: {  # modo oscuro
         "app_bg": "#14161A",
@@ -54,6 +57,9 @@ THEMES = {
         "bubble_user_bg": "rgba(238, 171, 89, 0.9)",
         "bubble_user_border": "rgba(238, 171, 89, 0.3)",
         "bubble_user_text": "#2B1600",
+        "chip_bg": "rgba(238, 171, 89, 0.15)",
+        "chip_text": "#FAC775",
+        "chip_border": "rgba(238, 171, 89, 0.3)",
     },
 }
 
@@ -91,8 +97,56 @@ def get_theme_css(dark: bool) -> str:
         border-color: {t['bubble_user_border']};
         color: {t['bubble_user_text']};
     }}
+    .source-chip {{
+        display: inline-block;
+        margin-top: 8px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11.5px;
+        background: {t['chip_bg']};
+        color: {t['chip_text']};
+        border: 0.5px solid {t['chip_border']};
+    }}
+    @keyframes rk-typing-bounce {{
+        0%, 60%, 100% {{ transform: translateY(0); }}
+        30% {{ transform: translateY(-4px); }}
+    }}
+    .typing-dot {{
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 4px;
+        opacity: 0.65;
+        background: {t['bubble_assistant_text']};
+        animation: rk-typing-bounce 1s infinite ease-in-out;
+    }}
+    .typing-dot:nth-child(2) {{ animation-delay: 0.15s; }}
+    .typing-dot:nth-child(3) {{ animation-delay: 0.3s; margin-right: 0; }}
     </style>
     """
+
+
+# Detecta el nombre de archivo .pdf citado dentro de la respuesta del
+# agente (ej. "segun Politica_Warranty_Dummy.pdf, pagina 4") para
+# mostrarlo como chip visual separado, ademas del texto de la
+# respuesta. No se modifica ni se elimina el texto original citado por
+# el agente (Cohere no siempre lo frasea igual); esto es puramente
+# aditivo para no arriesgar romper la gramatica de la respuesta.
+SOURCE_FILENAME_PATTERN = re.compile(
+    r"([\wÁÉÍÓÚáéíóúñÑ_\-]+\.pdf)(?:\s*,?\s*(?:p[aá]gina|p\.)\s*(\d+))?",
+    re.IGNORECASE,
+)
+
+
+def extract_source_chip_label(text: str) -> str | None:
+    """Devuelve la etiqueta del chip de fuente (documento + pagina si se detecto), o None."""
+    match = SOURCE_FILENAME_PATTERN.search(text)
+    if not match:
+        return None
+    filename, page = match.group(1), match.group(2)
+    label = filename.replace("_Dummy", "").replace("_", " ").replace(".pdf", "").replace(".PDF", "")
+    return f"📄 {label} · página {page}" if page else f"📄 {label}"
 
 # Puente de compatibilidad: en Streamlit Community Cloud, las API keys
 # se configuran en "Secrets" (st.secrets), no en un archivo .env local.
@@ -290,6 +344,10 @@ for i, msg in enumerate(st.session_state.messages):
             f"<div class='chat-bubble {bubble_class}'>{_markdown_bold_to_html(msg['content'])}</div>",
             unsafe_allow_html=True,
         )
+        if msg["role"] == "assistant":
+            chip_label = extract_source_chip_label(msg["content"])
+            if chip_label:
+                st.markdown(f"<span class='source-chip'>{chip_label}</span>", unsafe_allow_html=True)
 
         # Botones de feedback (tarjeta 8 - registrar ejecucion).
         # Se colocan aqui, ligados a session_state, y NO dentro del
@@ -341,13 +399,24 @@ if pregunta_nueva and not st.session_state.procesando:
 # bloqueada (botones e input deshabilitados) mientras se espera Cohere.
 if st.session_state.procesando:
     with st.chat_message("assistant", avatar=AVATAR_ROOFKA):
-        with st.status("🔎 Buscando en los documentos disponibles...", expanded=False) as status:
-            respuesta = answer_question(st.session_state.pregunta_pendiente, index, metadata)
-            status.update(label="Listo", state="complete", expanded=False)
+        typing_placeholder = st.empty()
+        typing_placeholder.markdown(
+            "<div class='chat-bubble chat-bubble-assistant'>"
+            "<span class='typing-dot'></span>"
+            "<span class='typing-dot'></span>"
+            "<span class='typing-dot'></span>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        respuesta = answer_question(st.session_state.pregunta_pendiente, index, metadata)
+        typing_placeholder.empty()
         st.markdown(
             f"<div class='chat-bubble chat-bubble-assistant'>{_markdown_bold_to_html(respuesta)}</div>",
             unsafe_allow_html=True,
         )
+        chip_label = extract_source_chip_label(respuesta)
+        if chip_label:
+            st.markdown(f"<span class='source-chip'>{chip_label}</span>", unsafe_allow_html=True)
 
     st.session_state.messages.append({"role": "assistant", "content": respuesta})
     st.session_state.feedback_dado = False  # respuesta nueva, aun sin calificar
