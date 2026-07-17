@@ -180,7 +180,7 @@ from agent import answer_question, SALUDO_INICIAL
 
 FEEDBACK_LOG_PATH = "feedback.jsonl"
 
-st.set_page_config(page_title="RoofKA — RLKA", page_icon="docs/roofka_avatar.png")
+st.set_page_config(page_title="RoofKA — RLKA", page_icon="🐆")
 
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = False
@@ -213,7 +213,7 @@ def log_feedback(question: str, answer: str, feedback: str) -> None:
 
 index, metadata = get_vectorstore()
 
-AVATAR_ROOFKA = "docs/roofka_avatar.png"
+AVATAR_ROOFKA = "🐆"
 AVATAR_USUARIO = "docs/user_avatar.png"
 
 PREGUNTAS_FRECUENTES = [
