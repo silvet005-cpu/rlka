@@ -69,7 +69,7 @@ TEXTS = {
         "lang_name": "Español",
         "header_caption": "Agente de inteligencia artificial para consultas sobre garantías, procedimientos operativos y RRHH.",
         "docs_header": "Documentos disponibles",
-        "docs_caption": "RoofKA es el asistente de Roof Leopard Roofing Company y solo responde con base en estos 3 documentos, citando la fuente exacta.",
+        "docs_caption": "RoofKA es el asistente de Roof Leopard Roofing Company y solo responde con base en estos 3 documentos, citando la fuente exacta. Respuestas basadas únicamente en los documentos oficiales — consultas más rápidas, sin adivinar.",
         "dark_mode_label": "🌙 Modo oscuro",
         "faq_header": "Preguntas frecuentes",
         "faq_note": "Las preguntas frecuentes se envían en español, ya que los documentos fuente están en español.",
@@ -101,7 +101,7 @@ TEXTS = {
         "lang_name": "English",
         "header_caption": "AI assistant for questions about warranty, operating procedures, and HR policies.",
         "docs_header": "Available documents",
-        "docs_caption": "RoofKA is Roof Leopard Roofing Company's assistant and only answers based on these 3 documents, citing the exact source.",
+        "docs_caption": "RoofKA is Roof Leopard Roofing Company's assistant and only answers based on these 3 documents, citing the exact source. Answers based only on the official documents — faster answers, no guessing.",
         "dark_mode_label": "🌙 Dark mode",
         "faq_header": "Frequently asked questions",
         "faq_note": "Frequently asked questions are sent in Spanish, since the source documents are in Spanish.",
@@ -133,7 +133,7 @@ TEXTS = {
         "lang_name": "Português",
         "header_caption": "Agente de inteligência artificial para consultas sobre garantia, procedimentos operacionais e RH.",
         "docs_header": "Documentos disponíveis",
-        "docs_caption": "RoofKA é o assistente da Roof Leopard Roofing Company e responde apenas com base nesses 3 documentos, citando a fonte exata.",
+        "docs_caption": "RoofKA é o assistente da Roof Leopard Roofing Company e responde apenas com base nesses 3 documentos, citando a fonte exata. Respostas baseadas somente nos documentos oficiais — consultas mais rápidas, sem adivinhar.",
         "dark_mode_label": "🌙 Modo escuro",
         "faq_header": "Perguntas frequentes",
         "faq_note": "As perguntas frequentes são enviadas em espanhol, já que os documentos fonte estão em espanhol.",
@@ -552,56 +552,45 @@ txt = TEXTS[lang]
 
 st.markdown(
     f"""
-    <div style="
-        display:inline-block;
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-        background: rgba(13,15,20,0.4);
-        padding: 14px 24px;
-        border-radius: 16px;
-        margin-bottom: 4px;
-    ">
-        <h1 style="color:#EEAB59; font-size:40px; margin:0; line-height:1;
-            font-family:'Inter', sans-serif; font-weight:800; letter-spacing:-0.02em;">
-            RoofK<span class="roof-a">A</span>
-        </h1>
-        <p style="margin:8px 0 0; font-size:14.5px; color:#D3D1C7; max-width:480px; line-height:1.45;">
-            {txt['header_caption']}
-        </p>
+    <div style="display:inline-block; margin-bottom:8px;">
+        <span style="
+            display:inline-block;
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            background: rgba(13,15,20,0.45);
+            padding: 6px 18px;
+            border-radius: 14px;
+        ">
+            <h1 style="color:#EEAB59; font-size:40px; margin:0; line-height:1.1; display:inline;
+                font-family:'Inter', sans-serif; font-weight:800; letter-spacing:-0.02em;">
+                RoofK<span class="roof-a">A</span>
+            </h1>
+        </span>
     </div>
+    <p style="margin:2px 0 0; font-size:14.5px; color:#D3D1C7; max-width:480px; line-height:1.45;
+        text-shadow: 0 1px 6px rgba(0,0,0,0.6);">
+        {txt['header_caption']}
+    </p>
     """,
     unsafe_allow_html=True,
 )
 
 # Reserva de espacio a la derecha para que el texto del chat no se
 # superponga visualmente con el personaje (la foto de fondo ya se
-# aplico completa en get_theme_css(), sobre stAppViewContainer).
+# aplico completa en get_theme_css(), sobre stAppViewContainer). La
+# frase que antes flotaba sobre la foto se elimino (se superponia de
+# forma que "ensuciaba" la imagen); ese mensaje ahora vive combinado
+# con la leyenda del panel izquierdo (ver docs_caption en TEXTS).
 st.markdown(
-    f"""
+    """
     <style>
-    .block-container {{
+    .block-container {
         padding-right: 340px !important;
-    }}
-    .mascot-quote {{
-        position: fixed;
-        top: 6.5rem;
-        right: 30px;
-        width: 290px;
-        font-size: 13.5px;
-        line-height: 1.6;
-        color: #F1EFE8;
-        text-shadow: 0 2px 14px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.6);
-        z-index: 2;
-    }}
-    @media (max-width: 1000px) {{
-        .block-container {{ padding-right: 1.5rem !important; }}
-        .mascot-quote {{ display: none; }}
-    }}
+    }
+    @media (max-width: 1000px) {
+        .block-container { padding-right: 1.5rem !important; }
+    }
     </style>
-    <div class="mascot-quote">
-        {txt['mascot_quote_line1']}<br/>
-        <strong>{txt['mascot_quote_line2']}</strong>
-    </div>
     """,
     unsafe_allow_html=True,
 )
