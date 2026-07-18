@@ -69,6 +69,11 @@ TEXTS = {
         "lang_name": "Español",
         "header_caption": "Agente de inteligencia artificial para consultas sobre garantías, procedimientos operativos y RRHH.",
         "docs_header": "Documentos disponibles",
+        "docs_list": (
+            "- Política de Garantía (Warranty) — *v1.1, jul 2026*\n"
+            "- Manual de Procedimientos Operativos — *v1.1, jul 2026*\n"
+            "- Política de Recursos Humanos y Compensación — *v1.0, jul 2026*"
+        ),
         "docs_caption": "RoofKA es el asistente de Roof Leopard Roofing Company y solo responde con base en estos 3 documentos, citando la fuente exacta. Respuestas basadas únicamente en los documentos oficiales — consultas más rápidas, sin adivinar.",
         "dark_mode_label": "🌙 Modo oscuro",
         "faq_header": "Preguntas frecuentes",
@@ -102,6 +107,11 @@ TEXTS = {
         "lang_name": "English",
         "header_caption": "AI assistant for questions about warranty, operating procedures, and HR policies.",
         "docs_header": "Available documents",
+        "docs_list": (
+            "- Warranty Policy — *v1.1, Jul 2026*\n"
+            "- Operating Procedures Manual — *v1.1, Jul 2026*\n"
+            "- HR & Compensation Policy — *v1.0, Jul 2026*"
+        ),
         "docs_caption": "RoofKA is Roof Leopard Roofing Company's assistant and only answers based on these 3 documents, citing the exact source. Answers based only on the official documents — faster answers, no guessing.",
         "dark_mode_label": "🌙 Dark mode",
         "faq_header": "Frequently asked questions",
@@ -135,6 +145,11 @@ TEXTS = {
         "lang_name": "Português",
         "header_caption": "Agente de inteligência artificial para consultas sobre garantia, procedimentos operacionais e RH.",
         "docs_header": "Documentos disponíveis",
+        "docs_list": (
+            "- Política de Garantia (Warranty) — *v1.1, jul 2026*\n"
+            "- Manual de Procedimentos Operacionais — *v1.1, jul 2026*\n"
+            "- Política de RH e Compensação — *v1.0, jul 2026*"
+        ),
         "docs_caption": "RoofKA é o assistente da Roof Leopard Roofing Company e responde apenas com base nesses 3 documentos, citando a fonte exata. Respostas baseadas somente nos documentos oficiais — consultas mais rápidas, sem adivinhar.",
         "dark_mode_label": "🌙 Modo escuro",
         "faq_header": "Perguntas frequentes",
@@ -499,13 +514,32 @@ def log_feedback(question: str, answer: str, feedback: str) -> None:
 index, metadata = get_vectorstore()
 
 AVATAR_ROOFKA = "docs/roofka_avatar_face.png"
-AVATAR_USUARIO = "🙂"
+AVATAR_USUARIO = "docs/user_avatar_dot.png"
 
-PREGUNTAS_FRECUENTES = [
+# La CONSULTA real que se envia al agente se mantiene siempre en
+# espanol (indices alineados con las 3 preguntas), ya que los
+# documentos fuente estan en espanol y esa es la consulta ya validada
+# en pruebas reales. Solo el TEXTO MOSTRADO en el boton se traduce por
+# idioma -- ver PREGUNTAS_FRECUENTES_DISPLAY mas abajo.
+PREGUNTAS_FRECUENTES_ES = [
     "¿Cuánto dura la garantía de un techo completo?",
     "¿Qué incluye el checklist de cierre de instalación?",
     "¿Cómo se clasifica un contratista independiente?",
 ]
+
+PREGUNTAS_FRECUENTES_DISPLAY = {
+    "es": PREGUNTAS_FRECUENTES_ES,
+    "en": [
+        "How long does a full roof warranty last?",
+        "What does the installation closeout checklist include?",
+        "How is an independent contractor classified?",
+    ],
+    "pt": [
+        "Quanto tempo dura a garantia de um telhado completo?",
+        "O que inclui o checklist de encerramento da instalação?",
+        "Como um contratado independente é classificado?",
+    ],
+}
 
 st.markdown(
     """
@@ -631,11 +665,7 @@ with st.sidebar:
             st.rerun()
 
     st.subheader(txt["docs_header"])
-    st.markdown(
-        "- Política de Garantía (Warranty) — *v1.1, jul 2026*\n"
-        "- Manual de Procedimientos Operativos — *v1.1, jul 2026*\n"
-        "- Política de Recursos Humanos y Compensación — *v1.0, jul 2026*"
-    )
+    st.markdown(txt["docs_list"])
     st.caption(txt["docs_caption"])
 
     st.divider()
@@ -643,14 +673,21 @@ with st.sidebar:
     if lang != "es":
         st.caption(txt["faq_note"])
     pregunta_frecuente = None
-    for pregunta_faq in PREGUNTAS_FRECUENTES:
+    for idx, pregunta_faq_es in enumerate(PREGUNTAS_FRECUENTES_ES):
+        etiqueta_mostrada = PREGUNTAS_FRECUENTES_DISPLAY[lang][idx]
         if st.button(
-            pregunta_faq,
+            etiqueta_mostrada,
             use_container_width=True,
             type="primary",
             disabled=st.session_state.get("procesando", False),
         ):
-            pregunta_frecuente = pregunta_faq
+            # Tupla (texto mostrado en la burbuja, texto real enviado
+            # al agente para la busqueda). Se mantienen separados: el
+            # texto de busqueda siempre va en espanol -- es la consulta
+            # ya validada contra los documentos --, mientras que la
+            # burbuja del usuario muestra el idioma que el usuario
+            # realmente clickeo, para que no se vea inconsistente.
+            pregunta_frecuente = (etiqueta_mostrada, pregunta_faq_es)
 
     st.divider()
 
@@ -804,19 +841,27 @@ if len(st.session_state.messages) == 1 and not st.session_state.procesando:
 # deshabilitados durante toda la espera de Cohere, no solo al final.
 # Esto es lo que evita que una segunda pregunta se dispare mientras la
 # primera sigue en curso (ver docs/Log_Cambios_RLKA.md).
-pregunta_nueva = st.chat_input(
+texto_tipeado = st.chat_input(
     txt["chat_placeholder"],
     disabled=st.session_state.procesando,
-) or pregunta_frecuente
+)
+# Normalizamos ambas fuentes a la misma forma (texto_mostrado, texto_busqueda):
+# lo tipeado a mano usa el mismo texto para ambos; las preguntas
+# frecuentes ya vienen como esa tupla desde el sidebar.
+if texto_tipeado:
+    pregunta_nueva = (texto_tipeado, texto_tipeado)
+else:
+    pregunta_nueva = pregunta_frecuente
 
 if pregunta_nueva and not st.session_state.procesando:
+    texto_mostrado, texto_busqueda = pregunta_nueva
     st.session_state.messages.append({
         "role": "user",
-        "content": pregunta_nueva,
+        "content": texto_mostrado,
         "time": datetime.now().strftime("%I:%M %p"),
     })
     st.session_state.procesando = True
-    st.session_state.pregunta_pendiente = pregunta_nueva
+    st.session_state.pregunta_pendiente = texto_busqueda
     st.rerun()
 
 # Fase 2 — Procesamiento: corre en la ejecucion siguiente, con la UI ya
