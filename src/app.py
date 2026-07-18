@@ -547,16 +547,31 @@ with open("docs/roofka_hero_bg.jpg", "rb") as f:
 
 st.markdown(get_theme_css(_hero_bg_b64), unsafe_allow_html=True)
 
-st.markdown(
-    "<h1 style=\"color:#EEAB59; font-size:40px; margin-bottom:0; "
-    "font-family:'Inter', sans-serif; font-weight:800; letter-spacing:-0.02em;\">"
-    "RoofK<span class='roof-a'>A</span></h1>",
-    unsafe_allow_html=True,
-)
 lang = st.session_state.lang
 txt = TEXTS[lang]
 
-st.caption(txt["header_caption"])
+st.markdown(
+    f"""
+    <div style="
+        display:inline-block;
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        background: rgba(13,15,20,0.4);
+        padding: 14px 24px;
+        border-radius: 16px;
+        margin-bottom: 4px;
+    ">
+        <h1 style="color:#EEAB59; font-size:40px; margin:0; line-height:1;
+            font-family:'Inter', sans-serif; font-weight:800; letter-spacing:-0.02em;">
+            RoofK<span class="roof-a">A</span>
+        </h1>
+        <p style="margin:8px 0 0; font-size:14.5px; color:#D3D1C7; max-width:480px; line-height:1.45;">
+            {txt['header_caption']}
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Reserva de espacio a la derecha para que el texto del chat no se
 # superponga visualmente con el personaje (la foto de fondo ya se
