@@ -4,6 +4,40 @@ Registro cronológico de correcciones y hallazgos técnicos relevantes durante e
 
 ---
 
+<a name="v2-mejoras-uiux"></a>
+## 2026-07-17 — v2.0: Rediseño completo de interfaz (rama `v2-ui-glassmorphism`)
+
+**Contexto:** tras la entrega evaluada del challenge (v1.0, en `main`), se inició una segunda fase enfocada exclusivamente en UI/UX, en una rama separada para no arriesgar la versión ya evaluada. Todo el trabajo se hizo con apoyo de Claude (Anthropic) como asistente de desarrollo, iterando sobre capturas de pantalla reales de la app desplegada.
+
+**Alcance — mejoras implementadas:**
+
+- **Tema oscuro** como estilo único de la interfaz (se descartó el toggle claro/oscuro tras detectar que aumentaba la superficie de bugs sin aportar valor real al caso de uso).
+- **Glassmorphism** en las burbujas de chat (`backdrop-filter: blur`), con paleta ajustada para verse como tarjetas legibles sobre una foto de fondo, no solo un tinte casi invisible.
+- **Fondo panorámico de marca**: foto del personaje "robot-leopardo" (generada con IA, ver `docs/roofka_hero_bg.jpg`) aplicada como fondo completo de la app, con oscurecido (scrim) de izquierda a derecha para mantener el chat legible sin que la imagen compita visualmente.
+- **Selector de idioma ES/EN/PT** (botones, no dropdown): traduce la interfaz completa (documentos, preguntas frecuentes, mensajes de sistema) y también instruye a Cohere para que las **respuestas del agente** se generen en el idioma seleccionado — sin retraducir ni reindexar los documentos fuente (que permanecen en español). Las preguntas frecuentes se muestran traducidas, pero la consulta real de búsqueda enviada al agente se mantiene siempre en español (la ya validada contra los documentos), evitando degradar la calidad del retrieval.
+- **Chip visual de fuente citada**: detecta el nombre del PDF citado en la respuesta vía regex (`extract_source_chip_label()`) y lo muestra como una etiqueta separada, sin modificar el texto original de la respuesta.
+- **Indicador de "escribiendo"** animado, en vez del `st.status` genérico.
+- **Confirmación visual persistente de feedback** (chip verde), además del toast que ya existía.
+- **Acceso restringido por clave (`ADMIN_PASSWORD`)** para la descarga de `feedback.jsonl` desde el sidebar — antes era pública para cualquiera que abriera el panel.
+- **Persistencia de feedback vía API de GitHub** (alternativa a Supabase): cada feedback se sincroniza como commit en una rama dedicada (`feedback-data`, separada de `main` y de esta rama) para sobrevivir a los redeploys de Streamlit Cloud, sin agregar una base de datos externa al stack.
+- **Avatares reales**: avatar del agente (recorte circular del rostro del personaje, con transparencia) y avatar del usuario (punto sólido de marca), en vez de emojis genéricos.
+- **Logo de marca real** en el sidebar (recortado de la imagen generada, con transparencia), y título "RoofKA" con la misma tipografía y paleta de colores del logo (Poppins 800, blanco + badge dorado "IA").
+
+**Correcciones técnicas relevantes encontradas durante el desarrollo:**
+
+- El fondo panorámico, aplicado inicialmente a `.block-container`, se veía cortado/distorsionado porque ese contenedor **crece con cada mensaje del chat** — `background-size: cover` se calculaba contra una altura variable en vez de la del viewport. Corregido aplicando el fondo a `[data-testid="stAppViewContainer"]`, que mantiene el tamaño del viewport sin importar el largo del historial.
+- El tema oscuro no se aplicaba a varios widgets nativos de Streamlit (input de chat, selector, botones) porque estos leen las variables de tema definidas en `.streamlit/config.toml`, no solo el CSS inyectado — se corrigió cambiando el tema base del `config.toml` a oscuro, en vez de sobreescribir cada widget individualmente por CSS.
+- El logo original de la imagen generada por IA venía "horneado" dentro de la foto (esquina superior izquierda); al cambiar de `cover` a `contain` esa zona se volvió visible y duplicaba el título "RoofKA" — se removió clonando el cielo nocturno circundante directamente sobre esa zona en la imagen fuente.
+- El saludo inicial del chat no se actualizaba al cambiar el idioma después de iniciar la sesión (quedaba "congelado" en el idioma del primer render) — corregido para que se regenere en el idioma activo mientras la conversación no haya comenzado.
+
+**Archivos afectados:** `src/app.py` (cambios mayores), `src/agent.py` (parámetro `lang` en `answer_question()`, diccionarios de saludo/fallback por idioma), `.streamlit/config.toml`, `.env.example` (nuevas variables `ADMIN_PASSWORD` y `GITHUB_TOKEN`), `requirements.txt` (agrega `requests`), assets nuevos en `docs/` (`roofka_hero_bg.jpg`, `roofka_sidebar_logo.png`, `roofka_avatar_face.png`, `user_avatar_dot.png`).
+
+**Validación:** los 8 tests existentes en `tests/test_agent.py` pasan sin modificaciones tras el cambio (el nuevo parámetro `lang` de `answer_question()` tiene default `"es"`, preservando el comportamiento anterior). Probado manualmente en los 3 idiomas, incluyendo persistencia de feedback verificada end-to-end (clic → commit automático en rama `feedback-data`).
+
+**Rama:** `v2-ui-glassmorphism` (no fusionada a `main` — evaluar tiempo de uso real antes de decidir el merge).
+
+---
+
 ## 2026-07-08 — Compatibilidad de dependencias en Streamlit Community Cloud
 
 **Contexto:** al desplegar `app.py` en Streamlit Community Cloud, el build falló.
