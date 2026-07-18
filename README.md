@@ -2,9 +2,30 @@
 
 **Agente de IA que responde preguntas en lenguaje natural sobre documentación interna de Roof Leopard Roofing Company**, usando arquitectura RAG (Retrieval-Augmented Generation).
 
-🔗 **App en producción:** [rlka-roofka.streamlit.app](https://rlka-roofka.streamlit.app)
 📦 Proyecto desarrollado para el **Oracle Tech Builder Challenge (Alura ONE)**.
-> 🚧 **En desarrollo:** la rama [`v2-ui-glassmorphism`](https://github.com/silvet005-cpu/rlka/tree/v2-ui-glassmorphism) contiene una v2.0 en progreso con mejoras de UI/UX (glassmorphism, modo oscuro, selector de idioma ES/EN/PT, nuevo layout y personaje). La versión en producción de arriba corresponde a la entrega evaluada del challenge y no se ve afectada.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🐆 Usa RoofKA — recomendado
+**[rlka-roofka-v2.streamlit.app](https://rlka-roofka-v2.streamlit.app)**
+
+Glassmorphism · modo oscuro · idioma ES/EN/PT · fondo de marca · feedback persistente vía GitHub
+
+</td>
+<td width="50%" valign="top">
+
+### 📦 Entrega original del challenge
+**[rlka-roofka.streamlit.app](https://rlka-roofka.streamlit.app)**
+
+Versión evaluada por Oracle Tech Builder / Alura ONE — se mantiene intacta como referencia
+
+</td>
+</tr>
+</table>
+
+> **¿Por qué dos versiones?** La entrega evaluada del challenge debe permanecer exactamente como fue calificada — modificarla directamente arriesgaría esa evidencia. Por eso la v2.0 (mejoras de UI/UX) se desarrolló en una rama separada, [`v2-ui-glassmorphism`](https://github.com/silvet005-cpu/rlka/tree/v2-ui-glassmorphism), con su propio despliegue independiente. Ambas comparten el mismo agente RAG por debajo; la diferencia es únicamente de interfaz. Detalle completo de cambios en [`docs/Log_Cambios_RLKA(RoofKA).md`](docs/Log_Cambios_RLKA%28RoofKA%29.md#v2-mejoras-uiux).
 ---
 
 ## Descripción
