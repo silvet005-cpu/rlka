@@ -44,8 +44,8 @@ THEME = {
     "app_bg": "#0D0F14",
     "widget_bg": "#1A1D24",
     "sidebar_bg": "#0A0C10",
-    "bubble_assistant_bg": "rgba(255, 255, 255, 0.05)",
-    "bubble_assistant_border": "rgba(255, 255, 255, 0.1)",
+    "bubble_assistant_bg": "rgba(255, 255, 255, 0.08)",
+    "bubble_assistant_border": "rgba(255, 255, 255, 0.12)",
     "bubble_assistant_text": "#F1EFE8",
     "bubble_user_bg": "rgba(238, 171, 89, 0.92)",
     "bubble_user_border": "rgba(238, 171, 89, 0.3)",
@@ -96,6 +96,7 @@ TEXTS = {
         "toast_negativo": "Gracias, usaremos esto para mejorar a RoofKA.",
         "mascot_quote_line1": "Respuestas basadas únicamente en los documentos oficiales.",
         "mascot_quote_line2": "Consultas más rápidas, sin adivinar.",
+        "assistant_subtitle": "Tu asistente interno de Roof Leopard",
     },
     "en": {
         "lang_name": "English",
@@ -128,6 +129,7 @@ TEXTS = {
         "toast_negativo": "Thanks, we'll use this to improve RoofKA.",
         "mascot_quote_line1": "Answers based only on the official documents.",
         "mascot_quote_line2": "Faster answers, no guessing.",
+        "assistant_subtitle": "Your internal Roof Leopard assistant",
     },
     "pt": {
         "lang_name": "Português",
@@ -160,6 +162,7 @@ TEXTS = {
         "toast_negativo": "Obrigado, vamos usar isso para melhorar o RoofKA.",
         "mascot_quote_line1": "Respostas baseadas somente nos documentos oficiais.",
         "mascot_quote_line2": "Consultas mais rápidas, sem adivinhar.",
+        "assistant_subtitle": "Seu assistente interno da Roof Leopard",
     },
 }
 
@@ -246,14 +249,14 @@ def get_theme_css(hero_bg_b64: str) -> str:
         color: {text_color} !important;
     }}
     .chat-bubble {{
-        border-radius: 14px;
-        padding: 12px 16px;
+        border-radius: 16px;
+        padding: 14px 18px;
         font-size: 15.5px;
         line-height: 1.5;
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         border: 0.5px solid transparent;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+        box-shadow: 0 4px 18px rgba(0,0,0,0.28);
     }}
     .chat-bubble-assistant {{
         background: {t['bubble_assistant_bg']};
@@ -495,7 +498,7 @@ def log_feedback(question: str, answer: str, feedback: str) -> None:
 
 index, metadata = get_vectorstore()
 
-AVATAR_ROOFKA = "🐆"
+AVATAR_ROOFKA = "docs/roofka_avatar_face.png"
 AVATAR_USUARIO = "🙂"
 
 PREGUNTAS_FRECUENTES = [
@@ -727,6 +730,28 @@ if "pregunta_pendiente" not in st.session_state:
     st.session_state.pregunta_pendiente = None
 if "feedback_por_indice" not in st.session_state:
     st.session_state.feedback_por_indice = {}  # {indice_mensaje: "positivo"/"negativo"}
+
+# Tarjeta de "contacto" del chat (v2.0): se muestra UNA sola vez arriba
+# de la conversacion, no repetida en cada mensaje -- identifica con
+# quien se esta hablando (RoofKA + badge "IA") y el subtitulo, con el
+# mismo estilo glass que el resto de tarjetas.
+st.markdown(
+    f"""
+    <div class="chat-bubble chat-bubble-assistant" style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+        <img src="data:image/png;base64,{base64.b64encode(open('docs/roofka_avatar_face.png','rb').read()).decode()}"
+             style="width:44px; height:44px; border-radius:50%; object-fit:cover; flex-shrink:0;" />
+        <div>
+            <div style="font-weight:700; font-size:15px;">
+                RoofKA
+                <span style="background:#EEAB59; color:#412402; font-size:10px; font-weight:700;
+                    padding:2px 8px; border-radius:10px; margin-left:6px; vertical-align:middle;">AI</span>
+            </div>
+            <div style="font-size:12.5px; color:{THEME['timestamp_color']};">{txt['assistant_subtitle']}</div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 for i, msg in enumerate(st.session_state.messages):
     avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
