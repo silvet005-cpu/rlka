@@ -66,7 +66,6 @@ THEME = {
 # mayor riesgo y consumo de la cuota trial. Ver Mejoras_Futuras_RLKA.md.
 TEXTS = {
     "es": {
-        "lang_name": "Español",
         "header_caption": "Agente de inteligencia artificial para consultas sobre garantías, procedimientos operativos y RRHH.",
         "docs_header": "Documentos disponibles",
         "docs_list": (
@@ -75,7 +74,6 @@ TEXTS = {
             "- Política de Recursos Humanos y Compensación — *v1.0, jul 2026*"
         ),
         "docs_caption": "RoofKA es el asistente de Roof Leopard Roofing Company y solo responde con base en estos 3 documentos, citando la fuente exacta. Respuestas basadas únicamente en los documentos oficiales — consultas más rápidas, sin adivinar.",
-        "dark_mode_label": "🌙 Modo oscuro",
         "faq_header": "Preguntas frecuentes",
         "faq_note": "Las preguntas frecuentes se envían en español, ya que los documentos fuente están en español.",
         "tip_header": "🐆 Tip: cómo preguntar mejor",
@@ -99,12 +97,8 @@ TEXTS = {
         "feedback_chip": "✓ ¡Gracias por tu feedback!",
         "toast_positivo": "¡Gracias por tu retroalimentación!",
         "toast_negativo": "Gracias, usaremos esto para mejorar a RoofKA.",
-        "mascot_quote_line1": "Respuestas basadas únicamente en los documentos oficiales.",
-        "mascot_quote_line2": "Consultas más rápidas, sin adivinar.",
-        "assistant_subtitle": "Tu asistente interno de Roof Leopard",
     },
     "en": {
-        "lang_name": "English",
         "header_caption": "AI assistant for questions about warranty, operating procedures, and HR policies.",
         "docs_header": "Available documents",
         "docs_list": (
@@ -113,7 +107,6 @@ TEXTS = {
             "- HR & Compensation Policy — *v1.0, Jul 2026*"
         ),
         "docs_caption": "RoofKA is Roof Leopard Roofing Company's assistant and only answers based on these 3 documents, citing the exact source. Answers based only on the official documents — faster answers, no guessing.",
-        "dark_mode_label": "🌙 Dark mode",
         "faq_header": "Frequently asked questions",
         "faq_note": "Frequently asked questions are sent in Spanish, since the source documents are in Spanish.",
         "tip_header": "🐆 Tip: how to ask better",
@@ -137,12 +130,8 @@ TEXTS = {
         "feedback_chip": "✓ Thanks for your feedback!",
         "toast_positivo": "Thanks for your feedback!",
         "toast_negativo": "Thanks, we'll use this to improve RoofKA.",
-        "mascot_quote_line1": "Answers based only on the official documents.",
-        "mascot_quote_line2": "Faster answers, no guessing.",
-        "assistant_subtitle": "Your internal Roof Leopard assistant",
     },
     "pt": {
-        "lang_name": "Português",
         "header_caption": "Agente de inteligência artificial para consultas sobre garantia, procedimentos operacionais e RH.",
         "docs_header": "Documentos disponíveis",
         "docs_list": (
@@ -151,7 +140,6 @@ TEXTS = {
             "- Política de RH e Compensação — *v1.0, jul 2026*"
         ),
         "docs_caption": "RoofKA é o assistente da Roof Leopard Roofing Company e responde apenas com base nesses 3 documentos, citando a fonte exata. Respostas baseadas somente nos documentos oficiais — consultas mais rápidas, sem adivinhar.",
-        "dark_mode_label": "🌙 Modo escuro",
         "faq_header": "Perguntas frequentes",
         "faq_note": "As perguntas frequentes são enviadas em espanhol, já que os documentos fonte estão em espanhol.",
         "tip_header": "🐆 Dica: como perguntar melhor",
@@ -175,9 +163,6 @@ TEXTS = {
         "feedback_chip": "✓ Obrigado pelo seu feedback!",
         "toast_positivo": "Obrigado pelo seu feedback!",
         "toast_negativo": "Obrigado, vamos usar isso para melhorar o RoofKA.",
-        "mascot_quote_line1": "Respostas baseadas somente nos documentos oficiais.",
-        "mascot_quote_line2": "Consultas mais rápidas, sem adivinhar.",
-        "assistant_subtitle": "Seu assistente interno da Roof Leopard",
     },
 }
 
