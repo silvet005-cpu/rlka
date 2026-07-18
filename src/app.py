@@ -44,10 +44,10 @@ THEME = {
     "app_bg": "#0D0F14",
     "widget_bg": "#1A1D24",
     "sidebar_bg": "#0A0C10",
-    "bubble_assistant_bg": "rgba(255, 255, 255, 0.08)",
+    "bubble_assistant_bg": "#1F232C",
     "bubble_assistant_border": "rgba(255, 255, 255, 0.12)",
     "bubble_assistant_text": "#F1EFE8",
-    "bubble_user_bg": "rgba(238, 171, 89, 0.92)",
+    "bubble_user_bg": "#EEAB59",
     "bubble_user_border": "rgba(238, 171, 89, 0.3)",
     "bubble_user_text": "#2B1600",
     "chip_bg": "rgba(238, 171, 89, 0.15)",
@@ -252,14 +252,12 @@ def get_theme_css(hero_bg_b64: str) -> str:
         color: {text_color} !important;
     }}
     .chat-bubble {{
-        border-radius: 16px;
+        border-radius: 14px;
         padding: 14px 18px;
         font-size: 15.5px;
         line-height: 1.5;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
         border: 0.5px solid transparent;
-        box-shadow: 0 4px 18px rgba(0,0,0,0.28);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
     }}
     .chat-bubble-assistant {{
         background: {t['bubble_assistant_bg']};
@@ -271,6 +269,19 @@ def get_theme_css(hero_bg_b64: str) -> str:
         border-color: {t['bubble_user_border']};
         color: {t['bubble_user_text']};
         box-shadow: none;
+    }}
+    /* Tarjeta de vidrio unica que envuelve toda la conversacion (v2.0):
+    el efecto glassmorphism vive aqui, no en cada burbuja individual --
+    mismo patron que la referencia visual (una tarjeta translucida con
+    mensajes solidos adentro, no vidrio repetido en cada mensaje). */
+    .st-key-conversation_card {{
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        background: rgba(20, 22, 28, 0.45);
+        border: 0.5px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 20px 20px 8px 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.35);
     }}
     .chat-timestamp {{
         display: block;
@@ -767,61 +778,104 @@ if "feedback_por_indice" not in st.session_state:
 # redundante ahora que el mismo tratamiento (nombre + badge IA) se
 # aplico directamente al titulo principal de la pagina.
 
-for i, msg in enumerate(st.session_state.messages):
-    avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
-    bubble_class = "chat-bubble-assistant" if msg["role"] == "assistant" else "chat-bubble-user"
-    timestamp_class = "chat-timestamp" if msg["role"] == "assistant" else "chat-timestamp chat-timestamp-user"
-    with st.chat_message(msg["role"], avatar=avatar):
-        st.markdown(
-            f"<div class='chat-bubble {bubble_class}'>{_markdown_bold_to_html(msg['content'])}</div>"
-            f"<span class='{timestamp_class}'>{msg.get('time', '')}</span>",
-            unsafe_allow_html=True,
-        )
-        if msg["role"] == "assistant":
-            chip_label = extract_source_chip_label(msg["content"])
+# Tarjeta de vidrio unica que envuelve TODA la conversacion (v2.0):
+# antes cada burbuja individual tenia su propio backdrop-filter blur;
+# ahora el efecto glass vive en este contenedor grande, y las burbujas
+# de adentro son solidas -- mismo patron que la referencia visual real
+# (una tarjeta translucida conteniendo mensajes solidos, no vidrio
+# repetido en cada mensaje).
+with st.container(key="conversation_card"):
+    for i, msg in enumerate(st.session_state.messages):
+        avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
+        bubble_class = "chat-bubble-assistant" if msg["role"] == "assistant" else "chat-bubble-user"
+        timestamp_class = "chat-timestamp" if msg["role"] == "assistant" else "chat-timestamp chat-timestamp-user"
+        with st.chat_message(msg["role"], avatar=avatar):
+            st.markdown(
+                f"<div class='chat-bubble {bubble_class}'>{_markdown_bold_to_html(msg['content'])}</div>"
+                f"<span class='{timestamp_class}'>{msg.get('time', '')}</span>",
+                unsafe_allow_html=True,
+            )
+            if msg["role"] == "assistant":
+                chip_label = extract_source_chip_label(msg["content"])
+                if chip_label:
+                    st.markdown(f"<span class='source-chip'>{chip_label}</span>", unsafe_allow_html=True)
+
+            # Botones de feedback (tarjeta 8 - registrar ejecucion).
+            # Se colocan aqui, ligados a session_state, y NO dentro del
+            # bloque "if pregunta:" de mas abajo: st.chat_input() solo
+            # devuelve texto en la ejecucion donde se escribio, asi que en
+            # la ejecucion disparada por el clic en 👍/👎 "pregunta" ya
+            # vuelve a estar vacio y ese bloque completo se saltaria,
+            # perdiendo el clic antes de llamar a log_feedback(). Al usar
+            # una bandera en session_state, el boton se sigue mostrando
+            # (y el clic si se procesa) en la ejecucion siguiente.
+            if i in st.session_state.feedback_por_indice:
+                # Confirmacion visual persistente (no solo el toast, que
+                # desaparece rapido): el usuario puede ver, incluso
+                # revisando el historial despues, que su feedback quedo
+                # registrado.
+                st.markdown(
+                    f"<span class='feedback-chip'>{txt['feedback_chip']}</span>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                es_ultimo_mensaje = i == len(st.session_state.messages) - 1
+                if msg["role"] == "assistant" and es_ultimo_mensaje and not st.session_state.feedback_dado:
+                    st.markdown("<div style='margin-top:6px;'></div>", unsafe_allow_html=True)
+                    col1, col2, _ = st.columns([0.1, 0.1, 0.8])
+                    with col1:
+                        if st.button("👍", key=f"like_{i}", type="primary"):
+                            log_feedback(st.session_state.messages[i - 1]["content"], msg["content"], "positivo")
+                            st.session_state.feedback_por_indice[i] = "positivo"
+                            st.session_state.feedback_dado = True
+                            st.toast(txt["toast_positivo"])
+                            st.rerun()
+                    with col2:
+                        if st.button("👎", key=f"dislike_{i}"):
+                            log_feedback(st.session_state.messages[i - 1]["content"], msg["content"], "negativo")
+                            st.session_state.feedback_por_indice[i] = "negativo"
+                            st.session_state.feedback_dado = True
+                            st.toast(txt["toast_negativo"])
+                            st.rerun()
+
+    if len(st.session_state.messages) == 1 and not st.session_state.procesando:
+        st.caption(txt["empty_state_caption"])
+
+    # Fase 2 — Procesamiento: corre en la ejecucion siguiente, con la UI ya
+    # bloqueada (botones e input deshabilitados) mientras se espera Cohere.
+    if st.session_state.procesando:
+        with st.chat_message("assistant", avatar=AVATAR_ROOFKA):
+            typing_placeholder = st.empty()
+            typing_placeholder.markdown(
+                "<div class='chat-bubble chat-bubble-assistant'>"
+                "<span class='typing-dot'></span>"
+                "<span class='typing-dot'></span>"
+                "<span class='typing-dot'></span>"
+                "</div>",
+                unsafe_allow_html=True,
+            )
+            respuesta = answer_question(st.session_state.pregunta_pendiente, index, metadata, lang=lang)
+            _hora_respuesta = datetime.now().strftime("%I:%M %p")
+            typing_placeholder.empty()
+            st.markdown(
+                f"<div class='chat-bubble chat-bubble-assistant'>{_markdown_bold_to_html(respuesta)}</div>"
+                f"<span class='chat-timestamp'>{_hora_respuesta}</span>",
+                unsafe_allow_html=True,
+            )
+            chip_label = extract_source_chip_label(respuesta)
             if chip_label:
                 st.markdown(f"<span class='source-chip'>{chip_label}</span>", unsafe_allow_html=True)
 
-        # Botones de feedback (tarjeta 8 - registrar ejecucion).
-        # Se colocan aqui, ligados a session_state, y NO dentro del
-        # bloque "if pregunta:" de mas abajo: st.chat_input() solo
-        # devuelve texto en la ejecucion donde se escribio, asi que en
-        # la ejecucion disparada por el clic en 👍/👎 "pregunta" ya
-        # vuelve a estar vacio y ese bloque completo se saltaria,
-        # perdiendo el clic antes de llamar a log_feedback(). Al usar
-        # una bandera en session_state, el boton se sigue mostrando
-        # (y el clic si se procesa) en la ejecucion siguiente.
-        if i in st.session_state.feedback_por_indice:
-            # Confirmacion visual persistente (no solo el toast, que
-            # desaparece rapido): el usuario puede ver, incluso
-            # revisando el historial despues, que su feedback quedo
-            # registrado.
-            st.markdown(
-                f"<span class='feedback-chip'>{txt['feedback_chip']}</span>",
-                unsafe_allow_html=True,
-            )
-        else:
-            es_ultimo_mensaje = i == len(st.session_state.messages) - 1
-            if msg["role"] == "assistant" and es_ultimo_mensaje and not st.session_state.feedback_dado:
-                st.markdown("<div style='margin-top:6px;'></div>", unsafe_allow_html=True)
-                col1, col2, _ = st.columns([0.1, 0.1, 0.8])
-                with col1:
-                    if st.button("👍", key=f"like_{i}", type="primary"):
-                        log_feedback(st.session_state.messages[i - 1]["content"], msg["content"], "positivo")
-                        st.session_state.feedback_por_indice[i] = "positivo"
-                        st.session_state.feedback_dado = True
-                        st.toast(txt["toast_positivo"])
-                        st.rerun()
-                with col2:
-                    if st.button("👎", key=f"dislike_{i}"):
-                        log_feedback(st.session_state.messages[i - 1]["content"], msg["content"], "negativo")
-                        st.session_state.feedback_por_indice[i] = "negativo"
-                        st.session_state.feedback_dado = True
-                        st.toast(txt["toast_negativo"])
-                        st.rerun()
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": respuesta,
+            "time": _hora_respuesta,
+        })
+        st.session_state.feedback_dado = False  # respuesta nueva, aun sin calificar
+        st.session_state.procesando = False
+        st.session_state.pregunta_pendiente = None
+        st.rerun()  # fuerza una ejecucion limpia: UI desbloqueada + botones de feedback consistentes
 
-if len(st.session_state.messages) == 1 and not st.session_state.procesando:
-    st.caption(txt["empty_state_caption"])
 
 # Fase 1 — Envio: se limita a anotar la pregunta y bloquear la UI de
 # inmediato (sin llamar todavia a answer_question, que es lo lento).
@@ -851,38 +905,3 @@ if pregunta_nueva and not st.session_state.procesando:
     st.session_state.procesando = True
     st.session_state.pregunta_pendiente = texto_busqueda
     st.rerun()
-
-# Fase 2 — Procesamiento: corre en la ejecucion siguiente, con la UI ya
-# bloqueada (botones e input deshabilitados) mientras se espera Cohere.
-if st.session_state.procesando:
-    with st.chat_message("assistant", avatar=AVATAR_ROOFKA):
-        typing_placeholder = st.empty()
-        typing_placeholder.markdown(
-            "<div class='chat-bubble chat-bubble-assistant'>"
-            "<span class='typing-dot'></span>"
-            "<span class='typing-dot'></span>"
-            "<span class='typing-dot'></span>"
-            "</div>",
-            unsafe_allow_html=True,
-        )
-        respuesta = answer_question(st.session_state.pregunta_pendiente, index, metadata, lang=lang)
-        _hora_respuesta = datetime.now().strftime("%I:%M %p")
-        typing_placeholder.empty()
-        st.markdown(
-            f"<div class='chat-bubble chat-bubble-assistant'>{_markdown_bold_to_html(respuesta)}</div>"
-            f"<span class='chat-timestamp'>{_hora_respuesta}</span>",
-            unsafe_allow_html=True,
-        )
-        chip_label = extract_source_chip_label(respuesta)
-        if chip_label:
-            st.markdown(f"<span class='source-chip'>{chip_label}</span>", unsafe_allow_html=True)
-
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": respuesta,
-        "time": _hora_respuesta,
-    })
-    st.session_state.feedback_dado = False  # respuesta nueva, aun sin calificar
-    st.session_state.procesando = False
-    st.session_state.pregunta_pendiente = None
-    st.rerun()  # fuerza una ejecucion limpia: UI desbloqueada + botones de feedback consistentes
