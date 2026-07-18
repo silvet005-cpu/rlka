@@ -20,6 +20,7 @@ import os
 import re
 from datetime import datetime, timezone
 
+import requests
 import streamlit as st
 
 
@@ -39,27 +40,39 @@ def _markdown_bold_to_html(text: str) -> str:
 THEMES = {
     False: {  # modo claro
         "app_bg": "#FDF5E8",
-        "bubble_assistant_bg": "rgba(255, 255, 255, 0.55)",
-        "bubble_assistant_border": "rgba(255, 255, 255, 0.6)",
+        "widget_bg": "#FFFFFF",
+        "sidebar_bg": "#232628",
+        "bubble_assistant_bg": "rgba(255, 255, 255, 0.65)",
+        "bubble_assistant_border": "rgba(35, 38, 40, 0.1)",
         "bubble_assistant_text": "#232628",
-        "bubble_user_bg": "rgba(238, 171, 89, 0.92)",
+        "bubble_user_bg": "rgba(238, 171, 89, 0.95)",
         "bubble_user_border": "rgba(238, 171, 89, 0.4)",
         "bubble_user_text": "#412402",
         "chip_bg": "rgba(153, 60, 29, 0.12)",
         "chip_text": "#712B13",
         "chip_border": "rgba(153, 60, 29, 0.25)",
+        "timestamp_color": "rgba(35, 38, 40, 0.45)",
+        "input_bg": "#FFFFFF",
+        "input_border": "rgba(35, 38, 40, 0.15)",
     },
-    True: {  # modo oscuro
-        "app_bg": "#14161A",
-        "bubble_assistant_bg": "rgba(255, 255, 255, 0.06)",
-        "bubble_assistant_border": "rgba(255, 255, 255, 0.12)",
+    True: {  # modo oscuro — paleta ajustada para acercarse a la
+        # referencia visual (azul-negro profundo, tarjetas con
+        # contraste real en vez de un gris translucido plano).
+        "app_bg": "#0D0F14",
+        "widget_bg": "#1A1D24",
+        "sidebar_bg": "#0A0C10",
+        "bubble_assistant_bg": "rgba(255, 255, 255, 0.05)",
+        "bubble_assistant_border": "rgba(255, 255, 255, 0.1)",
         "bubble_assistant_text": "#F1EFE8",
-        "bubble_user_bg": "rgba(238, 171, 89, 0.9)",
+        "bubble_user_bg": "rgba(238, 171, 89, 0.92)",
         "bubble_user_border": "rgba(238, 171, 89, 0.3)",
         "bubble_user_text": "#2B1600",
         "chip_bg": "rgba(238, 171, 89, 0.15)",
         "chip_text": "#FAC775",
         "chip_border": "rgba(238, 171, 89, 0.3)",
+        "timestamp_color": "rgba(241, 239, 232, 0.4)",
+        "input_bg": "rgba(255, 255, 255, 0.05)",
+        "input_border": "rgba(255, 255, 255, 0.12)",
     },
 }
 
@@ -178,19 +191,51 @@ def get_theme_css(dark: bool) -> str:
     un mensaje.
     """
     t = THEMES[dark]
+    text_color = t["bubble_assistant_text"]
     return f"""
     <style>
+    :root, .stApp {{
+        --background-color: {t['app_bg']};
+        --secondary-background-color: {t['widget_bg']};
+        --text-color: {text_color};
+    }}
     [data-testid="stAppViewContainer"] {{
         background-color: {t['app_bg']} !important;
     }}
+    [data-testid="stSidebar"], [data-testid="stSidebarContent"] {{
+        background-color: {t['sidebar_bg']} !important;
+    }}
+    [data-testid="stSidebar"] *, [data-testid="stSidebarContent"] * {{
+        color: #F1EFE8 !important;
+    }}
+    [data-testid="stBottom"], [data-testid="stBottomBlockContainer"] {{
+        background-color: {t['app_bg']} !important;
+    }}
+    [data-testid="stChatInput"] {{
+        background: {t['input_bg']} !important;
+        border: 0.5px solid {t['input_border']} !important;
+        border-radius: 24px !important;
+    }}
+    [data-testid="stChatInput"] textarea {{
+        color: {t['bubble_assistant_text']} !important;
+    }}
+    [data-testid="stExpander"], [data-baseweb="select"] > div, [data-testid="stTextInput"] input {{
+        background-color: {t['widget_bg']} !important;
+        color: {text_color} !important;
+    }}
+    button[kind="secondary"] {{
+        background-color: {t['widget_bg']} !important;
+        color: {text_color} !important;
+    }}
     .chat-bubble {{
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 12px 16px;
         font-size: 15.5px;
         line-height: 1.5;
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
         border: 0.5px solid transparent;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.12);
     }}
     .chat-bubble-assistant {{
         background: {t['bubble_assistant_bg']};
@@ -201,6 +246,46 @@ def get_theme_css(dark: bool) -> str:
         background: {t['bubble_user_bg']};
         border-color: {t['bubble_user_border']};
         color: {t['bubble_user_text']};
+        box-shadow: none;
+    }}
+    .chat-timestamp {{
+        display: block;
+        font-size: 10.5px;
+        color: {t['timestamp_color']};
+        margin-top: 4px;
+    }}
+    .chat-timestamp-user {{
+        text-align: right;
+    }}
+    .sidebar-logo-row {{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }}
+    .sidebar-logo-mark {{
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        background: #EEAB59;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }}
+    .sidebar-logo-text {{
+        font-family: 'Baloo 2', sans-serif;
+        font-weight: 700;
+        font-size: 17px;
+        line-height: 1.05;
+    }}
+    .sidebar-logo-text .gold {{ color: #EEAB59; }}
+    .sidebar-logo-sub {{
+        font-size: 9.5px;
+        letter-spacing: 0.06em;
+        color: rgba(241, 239, 232, 0.5);
+        margin: 0 0 10px 38px;
     }}
     .source-chip {{
         display: inline-block;
@@ -279,6 +364,22 @@ if "ADMIN_PASSWORD" not in os.environ and "ADMIN_PASSWORD" in st.secrets:
     os.environ["ADMIN_PASSWORD"] = st.secrets["ADMIN_PASSWORD"]
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
+# Persistencia de feedback via GitHub (v2.0 — alternativa a Supabase,
+# sin agregar una base de datos nueva al stack). El filesystem de
+# Streamlit Community Cloud es efimero: feedback.jsonl se pierde en
+# cada redeploy. En vez de eso, cada feedback se sincroniza tambien
+# como commit en una rama DEDICADA del propio repo (no en main ni en
+# v2-ui-glassmorphism), para no ensuciar el historial de codigo con
+# commits automaticos de feedback. Si GITHUB_TOKEN no esta configurado
+# (ej. desarrollo local), la sincronizacion se omite silenciosamente y
+# solo se guarda localmente, como antes.
+if "GITHUB_TOKEN" not in os.environ and "GITHUB_TOKEN" in st.secrets:
+    os.environ["GITHUB_TOKEN"] = st.secrets["GITHUB_TOKEN"]
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+GITHUB_REPO = "silvet005-cpu/rlka"
+GITHUB_FEEDBACK_BRANCH = "feedback-data"
+GITHUB_FEEDBACK_PATH = "docs/feedback.jsonl"
+
 from ingest import load_and_chunk_documents
 from vectorstore import build_vectorstore
 from agent import answer_question, SALUDO_INICIAL_POR_IDIOMA
@@ -288,7 +389,7 @@ FEEDBACK_LOG_PATH = "feedback.jsonl"
 st.set_page_config(page_title="RoofKA — RLKA", page_icon="🐆")
 
 if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = False
+    st.session_state.dark_mode = True
 if "lang" not in st.session_state:
     st.session_state.lang = "es"
 
@@ -306,6 +407,63 @@ def get_vectorstore():
     return build_vectorstore(chunks)
 
 
+def _sync_feedback_to_github(entry: dict) -> None:
+    """
+    Agrega una linea al feedback.jsonl versionado en GitHub (rama
+    dedicada GITHUB_FEEDBACK_BRANCH), para que sobreviva a los
+    redeploys de Streamlit Cloud. Falla en silencio (solo advierte en
+    consola) si algo sale mal -- nunca debe romper el flujo de dar
+    feedback en la UI por un problema de red o de la API de GitHub.
+    """
+    if not GITHUB_TOKEN:
+        return
+
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json",
+    }
+    api_base = f"https://api.github.com/repos/{GITHUB_REPO}"
+    contents_url = f"{api_base}/contents/{GITHUB_FEEDBACK_PATH}"
+
+    try:
+        # 1. Asegurar que la rama dedicada existe; si no, crearla a
+        # partir del HEAD actual de main.
+        branch_check = requests.get(f"{api_base}/branches/{GITHUB_FEEDBACK_BRANCH}", headers=headers, timeout=10)
+        if branch_check.status_code == 404:
+            main_ref = requests.get(f"{api_base}/git/ref/heads/main", headers=headers, timeout=10).json()
+            main_sha = main_ref["object"]["sha"]
+            requests.post(
+                f"{api_base}/git/refs",
+                headers=headers,
+                json={"ref": f"refs/heads/{GITHUB_FEEDBACK_BRANCH}", "sha": main_sha},
+                timeout=10,
+            )
+
+        # 2. Leer el contenido y sha actuales del archivo en esa rama
+        # (si no existe todavia el archivo ahi, se crea desde cero).
+        get_resp = requests.get(contents_url, headers=headers, params={"ref": GITHUB_FEEDBACK_BRANCH}, timeout=10)
+        if get_resp.status_code == 200:
+            data = get_resp.json()
+            contenido_actual = base64.b64decode(data["content"]).decode("utf-8")
+            sha_actual = data["sha"]
+        else:
+            contenido_actual = ""
+            sha_actual = None
+
+        nuevo_contenido = contenido_actual + json.dumps(entry, ensure_ascii=False) + "\n"
+        payload = {
+            "message": "chore(feedback): agregar registro de feedback",
+            "content": base64.b64encode(nuevo_contenido.encode("utf-8")).decode("utf-8"),
+            "branch": GITHUB_FEEDBACK_BRANCH,
+        }
+        if sha_actual:
+            payload["sha"] = sha_actual
+
+        requests.put(contents_url, headers=headers, json=payload, timeout=10)
+    except Exception as e:
+        print(f"[RoofKA] No se pudo sincronizar feedback a GitHub: {e}")
+
+
 def log_feedback(question: str, answer: str, feedback: str) -> None:
     """Registra el feedback del usuario (tarjeta 8 - registrar ejecucion)."""
     entry = {
@@ -316,6 +474,7 @@ def log_feedback(question: str, answer: str, feedback: str) -> None:
     }
     with open(FEEDBACK_LOG_PATH, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    _sync_feedback_to_github(entry)
 
 
 index, metadata = get_vectorstore()
@@ -439,6 +598,17 @@ st.markdown(
 )
 
 with st.sidebar:
+    st.markdown(
+        """
+        <div class="sidebar-logo-row">
+            <div class="sidebar-logo-mark">🏠</div>
+            <div class="sidebar-logo-text">ROOF <span class="gold">LEOPARD</span></div>
+        </div>
+        <div class="sidebar-logo-sub">ROOFING COMPANY</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.selectbox(
         "🌐",
         options=["es", "en", "pt"],
@@ -534,7 +704,11 @@ with st.sidebar:
                     st.error(txt["admin_wrong_password"])
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": SALUDO_INICIAL_POR_IDIOMA[lang]}]
+    st.session_state.messages = [{
+        "role": "assistant",
+        "content": SALUDO_INICIAL_POR_IDIOMA[lang],
+        "time": datetime.now().strftime("%I:%M %p"),
+    }]
 if "feedback_dado" not in st.session_state:
     st.session_state.feedback_dado = True  # no hay respuesta nueva pendiente de calificar
 if "procesando" not in st.session_state:
@@ -547,9 +721,11 @@ if "feedback_por_indice" not in st.session_state:
 for i, msg in enumerate(st.session_state.messages):
     avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
     bubble_class = "chat-bubble-assistant" if msg["role"] == "assistant" else "chat-bubble-user"
+    timestamp_class = "chat-timestamp" if msg["role"] == "assistant" else "chat-timestamp chat-timestamp-user"
     with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(
-            f"<div class='chat-bubble {bubble_class}'>{_markdown_bold_to_html(msg['content'])}</div>",
+            f"<div class='chat-bubble {bubble_class}'>{_markdown_bold_to_html(msg['content'])}</div>"
+            f"<span class='{timestamp_class}'>{msg.get('time', '')}</span>",
             unsafe_allow_html=True,
         )
         if msg["role"] == "assistant":
@@ -610,7 +786,11 @@ pregunta_nueva = st.chat_input(
 ) or pregunta_frecuente
 
 if pregunta_nueva and not st.session_state.procesando:
-    st.session_state.messages.append({"role": "user", "content": pregunta_nueva})
+    st.session_state.messages.append({
+        "role": "user",
+        "content": pregunta_nueva,
+        "time": datetime.now().strftime("%I:%M %p"),
+    })
     st.session_state.procesando = True
     st.session_state.pregunta_pendiente = pregunta_nueva
     st.rerun()
@@ -629,16 +809,22 @@ if st.session_state.procesando:
             unsafe_allow_html=True,
         )
         respuesta = answer_question(st.session_state.pregunta_pendiente, index, metadata, lang=lang)
+        _hora_respuesta = datetime.now().strftime("%I:%M %p")
         typing_placeholder.empty()
         st.markdown(
-            f"<div class='chat-bubble chat-bubble-assistant'>{_markdown_bold_to_html(respuesta)}</div>",
+            f"<div class='chat-bubble chat-bubble-assistant'>{_markdown_bold_to_html(respuesta)}</div>"
+            f"<span class='chat-timestamp'>{_hora_respuesta}</span>",
             unsafe_allow_html=True,
         )
         chip_label = extract_source_chip_label(respuesta)
         if chip_label:
             st.markdown(f"<span class='source-chip'>{chip_label}</span>", unsafe_allow_html=True)
 
-    st.session_state.messages.append({"role": "assistant", "content": respuesta})
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": respuesta,
+        "time": _hora_respuesta,
+    })
     st.session_state.feedback_dado = False  # respuesta nueva, aun sin calificar
     st.session_state.procesando = False
     st.session_state.pregunta_pendiente = None
