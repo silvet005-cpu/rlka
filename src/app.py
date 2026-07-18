@@ -201,6 +201,19 @@ def get_theme_css(dark: bool) -> str:
     }}
     [data-testid="stAppViewContainer"] {{
         background-color: {t['app_bg']} !important;
+        background-image: {
+            "radial-gradient(circle at 15% 10%, rgba(238,171,89,0.05), transparent 45%), "
+            "radial-gradient(circle at 85% 90%, rgba(238,171,89,0.04), transparent 40%)"
+            if dark else "none"
+        };
+    }}
+    [data-testid="stChatInput"] button {{
+        background-color: #EEAB59 !important;
+        border-radius: 50% !important;
+    }}
+    [data-testid="stChatInput"] button svg {{
+        fill: #412402 !important;
+        color: #412402 !important;
     }}
     [data-testid="stSidebar"], [data-testid="stSidebarContent"] {{
         background-color: {t['sidebar_bg']} !important;
@@ -566,14 +579,42 @@ st.markdown(
         width: 300px;
         height: calc(100vh - 3.75rem);
         background-color: {_tema_actual['app_bg']};
-        border-left: 0.5px solid {_tema_actual['bubble_assistant_border']};
         overflow: hidden;
         z-index: 1;
     }}
-    .mascot-panel img {{
+    .mascot-img-wrap {{
+        position: relative;
+        width: 100%;
+    }}
+    .mascot-img-wrap img {{
         width: 100%;
         display: block;
         object-fit: cover;
+    }}
+    /* Degradado de mezcla izquierda->derecha y arriba->abajo: la foto
+    se funde con el fondo del panel en vez de cortar en un borde duro,
+    para que se sienta integrada y no "pegada" encima de la interfaz. */
+    .mascot-img-wrap::before {{
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            90deg,
+            {_tema_actual['app_bg']} 0%,
+            rgba(0,0,0,0) 22%
+        );
+        pointer-events: none;
+    }}
+    .mascot-img-wrap::after {{
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            180deg,
+            rgba(0,0,0,0) 65%,
+            {_tema_actual['app_bg']} 100%
+        );
+        pointer-events: none;
     }}
     .mascot-quote {{
         padding: 18px 22px;
@@ -587,7 +628,9 @@ st.markdown(
     }}
     </style>
     <div class="mascot-panel">
-        <img src="data:image/jpeg;base64,{_mascot_b64}" />
+        <div class="mascot-img-wrap">
+            <img src="data:image/jpeg;base64,{_mascot_b64}" />
+        </div>
         <div class="mascot-quote">
             {txt['mascot_quote_line1']}<br/>
             <strong>{txt['mascot_quote_line2']}</strong>
