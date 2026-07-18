@@ -37,43 +37,25 @@ def _markdown_bold_to_html(text: str) -> str:
 # Paletas de tema centralizadas (v2.0 — mejoras UI/UX). Mantener TODOS
 # los colores dependientes de tema en este unico diccionario evita
 # duplicar valores hardcodeados en cada f-string de la interfaz.
-THEMES = {
-    False: {  # modo claro
-        "app_bg": "#FDF5E8",
-        "widget_bg": "#FFFFFF",
-        "sidebar_bg": "#232628",
-        "bubble_assistant_bg": "rgba(255, 255, 255, 0.65)",
-        "bubble_assistant_border": "rgba(35, 38, 40, 0.1)",
-        "bubble_assistant_text": "#232628",
-        "bubble_user_bg": "rgba(238, 171, 89, 0.95)",
-        "bubble_user_border": "rgba(238, 171, 89, 0.4)",
-        "bubble_user_text": "#412402",
-        "chip_bg": "rgba(153, 60, 29, 0.12)",
-        "chip_text": "#712B13",
-        "chip_border": "rgba(153, 60, 29, 0.25)",
-        "timestamp_color": "rgba(35, 38, 40, 0.45)",
-        "input_bg": "#FFFFFF",
-        "input_border": "rgba(35, 38, 40, 0.15)",
-    },
-    True: {  # modo oscuro — paleta ajustada para acercarse a la
-        # referencia visual (azul-negro profundo, tarjetas con
-        # contraste real en vez de un gris translucido plano).
-        "app_bg": "#0D0F14",
-        "widget_bg": "#1A1D24",
-        "sidebar_bg": "#0A0C10",
-        "bubble_assistant_bg": "rgba(255, 255, 255, 0.05)",
-        "bubble_assistant_border": "rgba(255, 255, 255, 0.1)",
-        "bubble_assistant_text": "#F1EFE8",
-        "bubble_user_bg": "rgba(238, 171, 89, 0.92)",
-        "bubble_user_border": "rgba(238, 171, 89, 0.3)",
-        "bubble_user_text": "#2B1600",
-        "chip_bg": "rgba(238, 171, 89, 0.15)",
-        "chip_text": "#FAC775",
-        "chip_border": "rgba(238, 171, 89, 0.3)",
-        "timestamp_color": "rgba(241, 239, 232, 0.4)",
-        "input_bg": "rgba(255, 255, 255, 0.05)",
-        "input_border": "rgba(255, 255, 255, 0.12)",
-    },
+# Paleta unica (v2.0 — se decidio dejar la app exclusivamente en modo
+# oscuro, ya que es el estilo que coincide con la referencia visual
+# real; el toggle claro/oscuro se elimino para reducir complejidad).
+THEME = {
+    "app_bg": "#0D0F14",
+    "widget_bg": "#1A1D24",
+    "sidebar_bg": "#0A0C10",
+    "bubble_assistant_bg": "rgba(255, 255, 255, 0.05)",
+    "bubble_assistant_border": "rgba(255, 255, 255, 0.1)",
+    "bubble_assistant_text": "#F1EFE8",
+    "bubble_user_bg": "rgba(238, 171, 89, 0.92)",
+    "bubble_user_border": "rgba(238, 171, 89, 0.3)",
+    "bubble_user_text": "#2B1600",
+    "chip_bg": "rgba(238, 171, 89, 0.15)",
+    "chip_text": "#FAC775",
+    "chip_border": "rgba(238, 171, 89, 0.3)",
+    "timestamp_color": "rgba(241, 239, 232, 0.4)",
+    "input_bg": "rgba(255, 255, 255, 0.05)",
+    "input_border": "rgba(255, 255, 255, 0.12)",
 }
 
 # Textos de interfaz por idioma (v2.0 — selector ES/EN/PT). IMPORTANTE:
@@ -182,15 +164,15 @@ TEXTS = {
 }
 
 
-def get_theme_css(dark: bool) -> str:
+def get_theme_css() -> str:
     """
-    Devuelve el bloque <style> completo para el tema activo (claro u
-    oscuro), incluyendo el efecto de vidrio esmerilado (glassmorphism)
-    de las burbujas de chat via backdrop-filter. Centralizar esto aqui
-    evita tener que duplicar colores en cada punto donde se renderiza
-    un mensaje.
+    Devuelve el bloque <style> completo del tema (unico, oscuro),
+    incluyendo el efecto de vidrio esmerilado (glassmorphism) de las
+    burbujas de chat via backdrop-filter. Centralizar esto aqui evita
+    tener que duplicar colores en cada punto donde se renderiza un
+    mensaje.
     """
-    t = THEMES[dark]
+    t = THEME
     text_color = t["bubble_assistant_text"]
     return f"""
     <style>
@@ -201,12 +183,10 @@ def get_theme_css(dark: bool) -> str:
     }}
     [data-testid="stAppViewContainer"] {{
         background-color: {t['app_bg']} !important;
-        background-image: {
-            "radial-gradient(circle at 88% 35%, rgba(238,171,89,0.22), transparent 55%), "
-            "radial-gradient(circle at 75% 75%, rgba(238,171,89,0.12), transparent 50%), "
-            "radial-gradient(circle at 10% 90%, rgba(30,60,120,0.12), transparent 45%)"
-            if dark else "none"
-        };
+        background-image:
+            radial-gradient(circle at 88% 35%, rgba(238,171,89,0.22), transparent 55%),
+            radial-gradient(circle at 75% 75%, rgba(238,171,89,0.12), transparent 50%),
+            radial-gradient(circle at 10% 90%, rgba(30,60,120,0.12), transparent 45%);
         background-attachment: fixed;
     }}
     [data-testid="stChatInput"] button {{
@@ -219,10 +199,7 @@ def get_theme_css(dark: bool) -> str:
     }}
     [data-testid="stSidebar"], [data-testid="stSidebarContent"] {{
         background-color: {t['sidebar_bg']} !important;
-        background-image: {
-            "radial-gradient(circle at 15% 8%, rgba(238,171,89,0.10), transparent 40%)"
-            if dark else "none"
-        };
+        background-image: radial-gradient(circle at 15% 8%, rgba(238,171,89,0.10), transparent 40%);
     }}
     [data-testid="stSidebar"] *, [data-testid="stSidebarContent"] * {{
         color: #F1EFE8 !important;
@@ -339,7 +316,7 @@ def get_theme_css(dark: bool) -> str:
         border-radius: 20px;
         font-size: 12px;
         background: rgba(80, 160, 60, 0.15);
-        color: {"#8FD65C" if dark else "#27500A"};
+        color: #8FD65C;
         border: 0.5px solid rgba(80, 160, 60, 0.3);
     }}
     </style>
@@ -407,8 +384,6 @@ FEEDBACK_LOG_PATH = "feedback.jsonl"
 
 st.set_page_config(page_title="RoofKA — RLKA", page_icon="🐆")
 
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = True
 if "lang" not in st.session_state:
     st.session_state.lang = "es"
 
@@ -545,7 +520,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown(get_theme_css(st.session_state.dark_mode), unsafe_allow_html=True)
+st.markdown(get_theme_css(), unsafe_allow_html=True)
 
 st.markdown(
     "<h1 style='color:#EEAB59; font-size:44px; margin-bottom:0;'>"
@@ -568,53 +543,52 @@ st.caption(txt["header_caption"])
 with open("docs/roofka_hero_bg.jpg", "rb") as f:
     _hero_bg_b64 = base64.b64encode(f.read()).decode()
 
-if st.session_state.dark_mode:
-    st.markdown(
-        f"""
-        <style>
+st.markdown(
+    f"""
+    <style>
+    .block-container {{
+        padding-right: 340px !important;
+        min-height: 100vh;
+        background-image:
+            linear-gradient(
+                90deg,
+                #0D0F14 0%,
+                rgba(13,15,20,0.94) 45%,
+                rgba(13,15,20,0.55) 68%,
+                rgba(13,15,20,0.05) 85%,
+                rgba(13,15,20,0) 100%
+            ),
+            url("data:image/jpeg;base64,{_hero_bg_b64}");
+        background-size: cover;
+        background-position: right center;
+        background-repeat: no-repeat;
+    }}
+    .mascot-quote {{
+        position: fixed;
+        top: 15%;
+        right: 30px;
+        width: 300px;
+        font-size: 14px;
+        line-height: 1.55;
+        color: #F1EFE8;
+        text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+        z-index: 2;
+    }}
+    @media (max-width: 1000px) {{
         .block-container {{
-            padding-right: 340px !important;
+            padding-right: 1.5rem !important;
+            background-image: none !important;
         }}
-        [data-testid="stMain"], .main {{
-            background-image:
-                linear-gradient(
-                    90deg,
-                    #0D0F14 0%,
-                    rgba(13,15,20,0.94) 45%,
-                    rgba(13,15,20,0.55) 68%,
-                    rgba(13,15,20,0.05) 85%,
-                    rgba(13,15,20,0) 100%
-                ),
-                url("data:image/jpeg;base64,{_hero_bg_b64}");
-            background-size: cover;
-            background-position: right center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
-        .mascot-quote {{
-            position: fixed;
-            top: 15%;
-            right: 30px;
-            width: 300px;
-            font-size: 14px;
-            line-height: 1.55;
-            color: #F1EFE8;
-            text-shadow: 0 2px 12px rgba(0,0,0,0.7);
-            z-index: 2;
-        }}
-        @media (max-width: 1000px) {{
-            [data-testid="stMain"], .main {{ background-image: none !important; }}
-            .block-container {{ padding-right: 1.5rem !important; }}
-            .mascot-quote {{ display: none; }}
-        }}
-        </style>
-        <div class="mascot-quote">
-            {txt['mascot_quote_line1']}<br/>
-            <strong>{txt['mascot_quote_line2']}</strong>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        .mascot-quote {{ display: none; }}
+    }}
+    </style>
+    <div class="mascot-quote">
+        {txt['mascot_quote_line1']}<br/>
+        <strong>{txt['mascot_quote_line2']}</strong>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 with st.sidebar:
     st.markdown(
@@ -643,8 +617,6 @@ with st.sidebar:
         "- Política de Recursos Humanos y Compensación — *v1.0, jul 2026*"
     )
     st.caption(txt["docs_caption"])
-
-    st.toggle(txt["dark_mode_label"], key="dark_mode")
 
     st.divider()
     st.subheader(txt["faq_header"])
