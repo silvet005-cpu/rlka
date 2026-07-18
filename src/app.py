@@ -66,6 +66,7 @@ THEME = {
 # mayor riesgo y consumo de la cuota trial. Ver Mejoras_Futuras_RLKA.md.
 TEXTS = {
     "es": {
+        "ai_badge": "IA",
         "header_caption": "Agente de inteligencia artificial para consultas sobre garantías, procedimientos operativos y RRHH.",
         "docs_header": "Documentos disponibles",
         "docs_list": (
@@ -99,6 +100,7 @@ TEXTS = {
         "toast_negativo": "Gracias, usaremos esto para mejorar a RoofKA.",
     },
     "en": {
+        "ai_badge": "AI",
         "header_caption": "AI assistant for questions about warranty, operating procedures, and HR policies.",
         "docs_header": "Available documents",
         "docs_list": (
@@ -132,6 +134,7 @@ TEXTS = {
         "toast_negativo": "Thanks, we'll use this to improve RoofKA.",
     },
     "pt": {
+        "ai_badge": "IA",
         "header_caption": "Agente de inteligência artificial para consultas sobre garantia, procedimentos operacionais e RH.",
         "docs_header": "Documentos disponíveis",
         "docs_list": (
@@ -591,7 +594,7 @@ st.markdown(
             </span>
             <span style="background:#EEAB59; color:#412402; font-size:13px; font-weight:800;
                 font-family:'Poppins', sans-serif; padding:3px 11px; border-radius:10px;">
-                IA
+                {txt['ai_badge']}
             </span>
         </span>
     </div>
