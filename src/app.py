@@ -198,15 +198,15 @@ def get_theme_css(hero_bg_b64: str) -> str:
                 90deg,
                 {t['app_bg']} 0%,
                 rgba(13,15,20,0.94) 40%,
-                rgba(13,15,20,0.55) 60%,
-                rgba(13,15,20,0.05) 78%,
-                rgba(13,15,20,0) 92%
+                rgba(13,15,20,0.6) 60%,
+                rgba(13,15,20,0.35) 78%,
+                rgba(13,15,20,0.35) 100%
             ),
             url("data:image/jpeg;base64,{hero_bg_b64}");
-        background-size: cover;
-        background-position: right center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
+        background-size: auto, contain;
+        background-position: right bottom, right bottom;
+        background-repeat: no-repeat, no-repeat;
+        background-attachment: fixed, fixed;
     }}
     .block-container {{
         background: transparent !important;
@@ -548,7 +548,8 @@ with open("docs/roofka_hero_bg.jpg", "rb") as f:
 st.markdown(get_theme_css(_hero_bg_b64), unsafe_allow_html=True)
 
 st.markdown(
-    "<h1 style='color:#EEAB59; font-size:44px; margin-bottom:0;'>"
+    "<h1 style=\"color:#EEAB59; font-size:40px; margin-bottom:0; "
+    "font-family:'Inter', sans-serif; font-weight:800; letter-spacing:-0.02em;\">"
     "RoofK<span class='roof-a'>A</span></h1>",
     unsafe_allow_html=True,
 )
@@ -568,13 +569,13 @@ st.markdown(
     }}
     .mascot-quote {{
         position: fixed;
-        top: 15%;
+        top: 6.5rem;
         right: 30px;
-        width: 300px;
-        font-size: 14px;
-        line-height: 1.55;
+        width: 290px;
+        font-size: 13.5px;
+        line-height: 1.6;
         color: #F1EFE8;
-        text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+        text-shadow: 0 2px 14px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.6);
         z-index: 2;
     }}
     @media (max-width: 1000px) {{
