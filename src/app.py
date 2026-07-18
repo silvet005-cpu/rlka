@@ -164,13 +164,23 @@ TEXTS = {
 }
 
 
-def get_theme_css() -> str:
+def get_theme_css(hero_bg_b64: str) -> str:
     """
     Devuelve el bloque <style> completo del tema (unico, oscuro),
     incluyendo el efecto de vidrio esmerilado (glassmorphism) de las
     burbujas de chat via backdrop-filter. Centralizar esto aqui evita
     tener que duplicar colores en cada punto donde se renderiza un
     mensaje.
+
+    IMPORTANTE sobre el fondo panoramico: se aplica a
+    [data-testid="stAppViewContainer"] (el "cascaron" estable de la
+    app), NUNCA a .block-container. El block-container es el
+    contenido scrolleable que CRECE con cada mensaje nuevo del chat;
+    aplicarle ahi un "background-size: cover" hacia que el calculo se
+    hiciera contra una altura cada vez mayor, produciendo un recorte
+    feo (una franja de color solido) en vez de la foto completa.
+    stAppViewContainer, en cambio, mantiene el tamano del viewport sin
+    importar cuanto crezca el historial de conversacion.
     """
     t = THEME
     text_color = t["bubble_assistant_text"]
@@ -184,10 +194,22 @@ def get_theme_css() -> str:
     [data-testid="stAppViewContainer"] {{
         background-color: {t['app_bg']} !important;
         background-image:
-            radial-gradient(circle at 88% 35%, rgba(238,171,89,0.22), transparent 55%),
-            radial-gradient(circle at 75% 75%, rgba(238,171,89,0.12), transparent 50%),
-            radial-gradient(circle at 10% 90%, rgba(30,60,120,0.12), transparent 45%);
+            linear-gradient(
+                90deg,
+                {t['app_bg']} 0%,
+                rgba(13,15,20,0.94) 40%,
+                rgba(13,15,20,0.55) 60%,
+                rgba(13,15,20,0.05) 78%,
+                rgba(13,15,20,0) 92%
+            ),
+            url("data:image/jpeg;base64,{hero_bg_b64}");
+        background-size: cover;
+        background-position: right center;
+        background-repeat: no-repeat;
         background-attachment: fixed;
+    }}
+    .block-container {{
+        background: transparent !important;
     }}
     [data-testid="stChatInput"] button {{
         background-color: #EEAB59 !important;
@@ -520,7 +542,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown(get_theme_css(), unsafe_allow_html=True)
+with open("docs/roofka_hero_bg.jpg", "rb") as f:
+    _hero_bg_b64 = base64.b64encode(f.read()).decode()
+
+st.markdown(get_theme_css(_hero_bg_b64), unsafe_allow_html=True)
 
 st.markdown(
     "<h1 style='color:#EEAB59; font-size:44px; margin-bottom:0;'>"
@@ -532,36 +557,14 @@ txt = TEXTS[lang]
 
 st.caption(txt["header_caption"])
 
-# Fondo de imagen unica (v2.0 — ajustado a la referencia real
-# compartida por Silvia: una sola foto panoramica del robot-leopardo
-# de noche, con el chat y el sidebar superpuestos encima). El
-# oscurecido (scrim) va SOLO en la seccion izquierda, donde vive el
-# chat, para que el texto sea legible; el personaje a la derecha queda
-# visible sin oscurecer, igual que en la referencia. Solo se aplica en
-# modo oscuro (la foto esta pensada para esa atmosfera nocturna); en
-# modo claro se mantiene el fondo solido simple.
-with open("docs/roofka_hero_bg.jpg", "rb") as f:
-    _hero_bg_b64 = base64.b64encode(f.read()).decode()
-
+# Reserva de espacio a la derecha para que el texto del chat no se
+# superponga visualmente con el personaje (la foto de fondo ya se
+# aplico completa en get_theme_css(), sobre stAppViewContainer).
 st.markdown(
     f"""
     <style>
     .block-container {{
         padding-right: 340px !important;
-        min-height: 100vh;
-        background-image:
-            linear-gradient(
-                90deg,
-                #0D0F14 0%,
-                rgba(13,15,20,0.94) 45%,
-                rgba(13,15,20,0.55) 68%,
-                rgba(13,15,20,0.05) 85%,
-                rgba(13,15,20,0) 100%
-            ),
-            url("data:image/jpeg;base64,{_hero_bg_b64}");
-        background-size: cover;
-        background-position: right center;
-        background-repeat: no-repeat;
     }}
     .mascot-quote {{
         position: fixed;
@@ -575,10 +578,7 @@ st.markdown(
         z-index: 2;
     }}
     @media (max-width: 1000px) {{
-        .block-container {{
-            padding-right: 1.5rem !important;
-            background-image: none !important;
-        }}
+        .block-container {{ padding-right: 1.5rem !important; }}
         .mascot-quote {{ display: none; }}
     }}
     </style>
@@ -590,25 +590,31 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+with open("docs/roofka_sidebar_logo.png", "rb") as f:
+    _sidebar_logo_b64 = base64.b64encode(f.read()).decode()
+
 with st.sidebar:
     st.markdown(
-        """
-        <div class="sidebar-logo-row">
-            <div class="sidebar-logo-mark">🏠</div>
-            <div class="sidebar-logo-text">ROOF <span class="gold">LEOPARD</span></div>
-        </div>
-        <div class="sidebar-logo-sub">ROOFING COMPANY</div>
+        f"""
+        <img src="data:image/png;base64,{_sidebar_logo_b64}"
+             style="width:100%; max-width:220px; display:block; margin-bottom:12px;" />
         """,
         unsafe_allow_html=True,
     )
 
-    st.selectbox(
-        "🌐",
-        options=["es", "en", "pt"],
-        format_func=lambda code: TEXTS[code]["lang_name"],
-        key="lang",
-        label_visibility="collapsed",
-    )
+    _col_es, _col_en, _col_pt = st.columns(3)
+    with _col_es:
+        if st.button("ES", use_container_width=True, type="primary" if lang == "es" else "secondary"):
+            st.session_state.lang = "es"
+            st.rerun()
+    with _col_en:
+        if st.button("EN", use_container_width=True, type="primary" if lang == "en" else "secondary"):
+            st.session_state.lang = "en"
+            st.rerun()
+    with _col_pt:
+        if st.button("PT", use_container_width=True, type="primary" if lang == "pt" else "secondary"):
+            st.session_state.lang = "pt"
+            st.rerun()
 
     st.subheader(txt["docs_header"])
     st.markdown(
@@ -700,6 +706,14 @@ if "messages" not in st.session_state:
         "content": SALUDO_INICIAL_POR_IDIOMA[lang],
         "time": datetime.now().strftime("%I:%M %p"),
     }]
+elif len(st.session_state.messages) == 1:
+    # Mientras la conversacion no haya empezado (solo esta el saludo),
+    # lo actualizamos al idioma actual cada vez -- si no, cambiar el
+    # selector de idioma no se reflejaba en el saludo ya guardado desde
+    # el arranque de la sesion. Una vez hay conversacion real, no se
+    # retraduce el historial (ver TEXTS/agent.py: no se retraducen
+    # respuestas ya generadas).
+    st.session_state.messages[0]["content"] = SALUDO_INICIAL_POR_IDIOMA[lang]
 if "feedback_dado" not in st.session_state:
     st.session_state.feedback_dado = True  # no hay respuesta nueva pendiente de calificar
 if "procesando" not in st.session_state:
