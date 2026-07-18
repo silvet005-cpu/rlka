@@ -510,7 +510,7 @@ PREGUNTAS_FRECUENTES = [
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Inter:wght@400;500;600&family=Poppins:wght@700;800;900&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
@@ -557,17 +557,23 @@ st.markdown(
     f"""
     <div style="display:inline-block; margin-bottom:8px;">
         <span style="
-            display:inline-block;
+            display:inline-flex;
+            align-items:center;
+            gap:10px;
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
             background: rgba(13,15,20,0.45);
-            padding: 6px 18px;
+            padding: 8px 18px;
             border-radius: 14px;
         ">
-            <h1 style="color:#EEAB59; font-size:40px; margin:0; line-height:1.1; display:inline;
-                font-family:'Inter', sans-serif; font-weight:800; letter-spacing:-0.02em;">
-                RoofK<span class="roof-a">A</span>
-            </h1>
+            <span style="color:#FFFFFF; font-size:34px; line-height:1;
+                font-family:'Poppins', sans-serif; font-weight:800; letter-spacing:-0.01em;">
+                RoofKA
+            </span>
+            <span style="background:#EEAB59; color:#412402; font-size:13px; font-weight:800;
+                font-family:'Poppins', sans-serif; padding:3px 11px; border-radius:10px;">
+                IA
+            </span>
         </span>
     </div>
     <p style="margin:2px 0 0; font-size:14.5px; color:#D3D1C7; max-width:480px; line-height:1.45;
@@ -731,27 +737,10 @@ if "pregunta_pendiente" not in st.session_state:
 if "feedback_por_indice" not in st.session_state:
     st.session_state.feedback_por_indice = {}  # {indice_mensaje: "positivo"/"negativo"}
 
-# Tarjeta de "contacto" del chat (v2.0): se muestra UNA sola vez arriba
-# de la conversacion, no repetida en cada mensaje -- identifica con
-# quien se esta hablando (RoofKA + badge "IA") y el subtitulo, con el
-# mismo estilo glass que el resto de tarjetas.
-st.markdown(
-    f"""
-    <div class="chat-bubble chat-bubble-assistant" style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-        <img src="data:image/png;base64,{base64.b64encode(open('docs/roofka_avatar_face.png','rb').read()).decode()}"
-             style="width:44px; height:44px; border-radius:50%; object-fit:cover; flex-shrink:0;" />
-        <div>
-            <div style="font-weight:700; font-size:15px;">
-                RoofKA
-                <span style="background:#EEAB59; color:#412402; font-size:10px; font-weight:700;
-                    padding:2px 8px; border-radius:10px; margin-left:6px; vertical-align:middle;">AI</span>
-            </div>
-            <div style="font-size:12.5px; color:{THEME['timestamp_color']};">{txt['assistant_subtitle']}</div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+# NOTA: la tarjeta de "contacto" (RoofKA + badge IA + subtitulo) que
+# antes vivia aqui arriba de la conversacion se elimino -- es
+# redundante ahora que el mismo tratamiento (nombre + badge IA) se
+# aplico directamente al titulo principal de la pagina.
 
 for i, msg in enumerate(st.session_state.messages):
     avatar = AVATAR_ROOFKA if msg["role"] == "assistant" else AVATAR_USUARIO
