@@ -202,10 +202,12 @@ def get_theme_css(dark: bool) -> str:
     [data-testid="stAppViewContainer"] {{
         background-color: {t['app_bg']} !important;
         background-image: {
-            "radial-gradient(circle at 15% 10%, rgba(238,171,89,0.05), transparent 45%), "
-            "radial-gradient(circle at 85% 90%, rgba(238,171,89,0.04), transparent 40%)"
+            "radial-gradient(circle at 88% 35%, rgba(238,171,89,0.22), transparent 55%), "
+            "radial-gradient(circle at 75% 75%, rgba(238,171,89,0.12), transparent 50%), "
+            "radial-gradient(circle at 10% 90%, rgba(30,60,120,0.12), transparent 45%)"
             if dark else "none"
         };
+        background-attachment: fixed;
     }}
     [data-testid="stChatInput"] button {{
         background-color: #EEAB59 !important;
@@ -217,6 +219,10 @@ def get_theme_css(dark: bool) -> str:
     }}
     [data-testid="stSidebar"], [data-testid="stSidebarContent"] {{
         background-color: {t['sidebar_bg']} !important;
+        background-image: {
+            "radial-gradient(circle at 15% 8%, rgba(238,171,89,0.10), transparent 40%)"
+            if dark else "none"
+        };
     }}
     [data-testid="stSidebar"] *, [data-testid="stSidebarContent"] * {{
         color: #F1EFE8 !important;
@@ -551,94 +557,64 @@ txt = TEXTS[lang]
 
 st.caption(txt["header_caption"])
 
-# Panel decorativo a la derecha (v2.0 — inspirado en referencia de
-# NovaBank/RoofKA compartida por Silvia). Es puramente visual: NO
-# incluye KPIs, botones de accion ni datos de CRM/ProLine, ya que
-# RoofKA solo consulta 3 documentos PDF estaticos y ese tipo de
-# contenido implicaria funcionalidad que este proyecto no tiene.
-# Se implementa con position:fixed (no como columna de Streamlit) para
-# no reestructurar todo el flujo existente del chat; se oculta en
-# pantallas angostas via media query, ya que un panel fijo de este
-# tipo no es viable en movil.
-with open("docs/roofka_mascot_hero.jpg", "rb") as f:
-    _mascot_b64 = base64.b64encode(f.read()).decode()
+# Fondo de imagen unica (v2.0 — ajustado a la referencia real
+# compartida por Silvia: una sola foto panoramica del robot-leopardo
+# de noche, con el chat y el sidebar superpuestos encima). El
+# oscurecido (scrim) va SOLO en la seccion izquierda, donde vive el
+# chat, para que el texto sea legible; el personaje a la derecha queda
+# visible sin oscurecer, igual que en la referencia. Solo se aplica en
+# modo oscuro (la foto esta pensada para esa atmosfera nocturna); en
+# modo claro se mantiene el fondo solido simple.
+with open("docs/roofka_hero_bg.jpg", "rb") as f:
+    _hero_bg_b64 = base64.b64encode(f.read()).decode()
 
-_tema_actual = THEMES[st.session_state.dark_mode]
-_texto_mascota_color = "#F1EFE8" if st.session_state.dark_mode else "#232628"
-
-st.markdown(
-    f"""
-    <style>
-    .block-container {{
-        padding-right: 300px !important;
-    }}
-    .mascot-panel {{
-        position: fixed;
-        top: 3.75rem;
-        right: 0;
-        width: 300px;
-        height: calc(100vh - 3.75rem);
-        background-color: {_tema_actual['app_bg']};
-        overflow: hidden;
-        z-index: 1;
-    }}
-    .mascot-img-wrap {{
-        position: relative;
-        width: 100%;
-    }}
-    .mascot-img-wrap img {{
-        width: 100%;
-        display: block;
-        object-fit: cover;
-    }}
-    /* Degradado de mezcla izquierda->derecha y arriba->abajo: la foto
-    se funde con el fondo del panel en vez de cortar en un borde duro,
-    para que se sienta integrada y no "pegada" encima de la interfaz. */
-    .mascot-img-wrap::before {{
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-            90deg,
-            {_tema_actual['app_bg']} 0%,
-            rgba(0,0,0,0) 22%
-        );
-        pointer-events: none;
-    }}
-    .mascot-img-wrap::after {{
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-            180deg,
-            rgba(0,0,0,0) 65%,
-            {_tema_actual['app_bg']} 100%
-        );
-        pointer-events: none;
-    }}
-    .mascot-quote {{
-        padding: 18px 22px;
-        font-size: 13.5px;
-        line-height: 1.5;
-        color: {_texto_mascota_color};
-    }}
-    @media (max-width: 900px) {{
-        .mascot-panel {{ display: none; }}
-        .block-container {{ padding-right: 1.5rem !important; }}
-    }}
-    </style>
-    <div class="mascot-panel">
-        <div class="mascot-img-wrap">
-            <img src="data:image/jpeg;base64,{_mascot_b64}" />
-        </div>
+if st.session_state.dark_mode:
+    st.markdown(
+        f"""
+        <style>
+        .block-container {{
+            padding-right: 340px !important;
+        }}
+        [data-testid="stMain"], .main {{
+            background-image:
+                linear-gradient(
+                    90deg,
+                    #0D0F14 0%,
+                    rgba(13,15,20,0.94) 45%,
+                    rgba(13,15,20,0.55) 68%,
+                    rgba(13,15,20,0.05) 85%,
+                    rgba(13,15,20,0) 100%
+                ),
+                url("data:image/jpeg;base64,{_hero_bg_b64}");
+            background-size: cover;
+            background-position: right center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        .mascot-quote {{
+            position: fixed;
+            top: 15%;
+            right: 30px;
+            width: 300px;
+            font-size: 14px;
+            line-height: 1.55;
+            color: #F1EFE8;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+            z-index: 2;
+        }}
+        @media (max-width: 1000px) {{
+            [data-testid="stMain"], .main {{ background-image: none !important; }}
+            .block-container {{ padding-right: 1.5rem !important; }}
+            .mascot-quote {{ display: none; }}
+        }}
+        </style>
         <div class="mascot-quote">
             {txt['mascot_quote_line1']}<br/>
             <strong>{txt['mascot_quote_line2']}</strong>
         </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+        """,
+        unsafe_allow_html=True,
+    )
 
 with st.sidebar:
     st.markdown(
